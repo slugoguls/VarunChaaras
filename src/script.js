@@ -25,9 +25,12 @@ camera.position.z = 5
 // initialize the renderer
 const canvas = document.querySelector('canvas.threejs')
 const renderer = new THREE.WebGLRenderer({
-  canvas: canvas
+  canvas: canvas,
+  antialias: true
 })
 renderer.setSize(window.innerWidth, window.innerHeight)
+
+
 
 const controls = new OrbitControls(camera, canvas) 
 controls.enableDamping = true
