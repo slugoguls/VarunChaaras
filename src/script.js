@@ -9,8 +9,18 @@ const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 const cubeMaterial = new THREE.MeshBasicMaterial({ color: "red" });
 
 const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-scene.add(cubeMesh);
+const cubeMesh2 = new THREE.Mesh(cubeGeometry, cubeMaterial);
+cubeMesh2.position.x = 2;
+const cubeMesh3 = new THREE.Mesh(cubeGeometry, cubeMaterial);
+//scene.add(cubeMesh);
+cubeMesh3.position.x = -2;
 
+const group = new THREE.Group();
+group.add(cubeMesh);
+group.add(cubeMesh2);
+group.add(cubeMesh3);
+
+scene.add(group);
 // initialize the camera
 const camera = new THREE.PerspectiveCamera(
   35,
