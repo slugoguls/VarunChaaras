@@ -44,6 +44,10 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 // controls.autoRotate = true;
 
+
+const clock = new THREE.Clock()
+let previousTime = 0
+
 window.addEventListener('resize', () =>{
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix()
@@ -52,6 +56,12 @@ window.addEventListener('resize', () =>{
 
 // render the scene
 const renderloop = () => {
+
+  const currentTime = clock.getElapsedTime()
+  const delta = currentTime - previousTime
+  previousTime = currentTime
+
+
   controls.update();  
   renderer.render(scene, camera);
   window.requestAnimationFrame(renderloop);
