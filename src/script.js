@@ -6,21 +6,11 @@ const scene = new THREE.Scene();
 
 // add objects to the scene
 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-const cubeMaterial = new THREE.MeshBasicMaterial({ color: "red" });
-
+const cubeMaterial = new THREE.MeshBasicMaterial({ color: "red", wireframe: true });
 const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-const cubeMesh2 = new THREE.Mesh(cubeGeometry, cubeMaterial);
-cubeMesh2.position.x = 2;
-const cubeMesh3 = new THREE.Mesh(cubeGeometry, cubeMaterial);
-//scene.add(cubeMesh);
-cubeMesh3.position.x = -2;
 
-const group = new THREE.Group();
-group.add(cubeMesh);
-group.add(cubeMesh2);
-group.add(cubeMesh3);
+scene.add(cubeMesh);
 
-scene.add(group);
 // initialize the camera
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -37,32 +27,22 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 // instantiate the controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-// controls.autoRotate = true;
+controls.autoRotate = true;
 
-
-const clock = new THREE.Clock()
-let previousTime = 0
-
-window.addEventListener('resize', () =>{
+window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix()
+  camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-})
+});
 
 // render the scene
 const renderloop = () => {
-
-  const currentTime = clock.getElapsedTime()
-  const delta = currentTime - previousTime
-  previousTime = currentTime
-
-
-  controls.update();  
+  controls.update();
   renderer.render(scene, camera);
   window.requestAnimationFrame(renderloop);
 };
