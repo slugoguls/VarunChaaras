@@ -21,11 +21,13 @@ const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
 const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
 
 
-const textureTest = textureLoader.load('\textures\whispy-grass-meadow-bl\wispy-grass-meadow_albedo.png')
-
-
+const grassTexture = textureLoader.load('/textures/whispy-grass-meadow-bl/wispy-grass-meadow_albedo.png')
+grassTexture.repeat.set(2, 2)
+grassTexture.wrapS = THREE.RepeatWrapping
+grassTexture.wrapT = THREE.RepeatWrapping
 // initialize the material
 const material = new THREE.MeshBasicMaterial();
+material.map = grassTexture
 
 
 const group = new THREE.Group();
@@ -38,6 +40,8 @@ knot.position.x = 1.5;
 
 const plane = new THREE.Mesh(planeGeometry, material);
 plane.position.x = -1.5;
+plane.rotation.x = -(Math.PI * 0.5)
+plane.scale.set(100,100,100)
 
 const sphere = new THREE.Mesh()
 sphere.geometry = sphereGeometry;
@@ -53,7 +57,8 @@ cylinder.position.y = -1.5;
 
 // add the mesh to the scene
 
-group.add(sphere, cylinder, cube, knot, plane);
+//group.add(sphere, cylinder, cube, knot, plane);
+group.add(plane)
 scene.add(group);
 
 // initialize the light
@@ -69,9 +74,10 @@ const camera = new THREE.PerspectiveCamera(
   35,
   window.innerWidth / window.innerHeight,
   0.1,
-  200
+  10000
 );
 camera.position.z = 10;
+camera.position.y = 5
 
 // initialize the renderer
 const canvas = document.querySelector("canvas.threejs");
@@ -95,13 +101,13 @@ window.addEventListener("resize", () => {
 // render the scene
 const renderloop = () => {
 
-  group.children.forEach((child) => {
+  // group.children.forEach((child) => {
 
-    if (child instanceof THREE.Mesh){
-        child.rotation.y += 0.01
-    }
+  //   if (child instanceof THREE.Mesh){
+  //       child.rotation.y += 0.01
+  //   }
 
-  })
+  // })
 
   controls.update();
   renderer.render(scene, camera);
