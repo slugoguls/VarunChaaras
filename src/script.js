@@ -27,7 +27,7 @@ const camera = createCamera(); // no OrbitControls
 // Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 const pointLight = new THREE.PointLight(0xffffff, 500);
-pointLight.position.set(0, -5, 0);
+pointLight.position.set(0, -8, 0);
 scene.add(pointLight);
 
 const room = createRoom(roomSize, 0xF5F5DC, true);
