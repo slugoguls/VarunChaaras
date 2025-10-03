@@ -37,7 +37,7 @@ export function setFrame(texture, frameIndex, framesHoriz, framesVert) {
  * Creates a sprite mesh from a sprite sheet.
  */
 export function createSprite(texture, aspect = 36 / 64, scale = 2) {
-  const material = new THREE.MeshBasicMaterial({
+  const material = new THREE.MeshStandardMaterial({
     map: texture,
     transparent: true,
     alphaTest: 0.5,
