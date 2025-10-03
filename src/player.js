@@ -1,7 +1,8 @@
 import { createSprite, setFrame, loadSpriteSheet } from "./spriteLoader.js";
 
 export class Player {
-  constructor() {
+  constructor(boundary) {
+    this.boundary = boundary;
     // Movement keys
     this.keys = { w: false, a: false, s: false, d: false };
 
@@ -10,7 +11,7 @@ export class Player {
     this.framesVert = 10;
     this.spriteSheet = loadSpriteSheet("Char/siteguy-Sheet.png", this.framesHoriz, this.framesVert);
     this.sprite = createSprite(this.spriteSheet);
-    this.sprite.position.y = -3.8; // above the floor
+    this.sprite.position.y = -18.8; // above the floor
     this.sprite.scale.set(1.5, 1.5)
 
     // Animation state
@@ -49,12 +50,24 @@ export class Player {
     if (this.keys.hasOwnProperty(key)) this.keys[key] = false;
   }
 
-  move(speed = 0.03) {
-    if (this.keys.w) { this.sprite.position.z -= speed; this.lastDirection = "Back"; }
-    if (this.keys.s) { this.sprite.position.z += speed; this.lastDirection = "Front"; }
-    if (this.keys.a) { this.sprite.position.x -= speed; this.lastDirection = "Left"; }
-    if (this.keys.d) { this.sprite.position.x += speed; this.lastDirection = "Right"; }
+move(speed = 0.03) {
+  let newX = this.sprite.position.x;
+  let newZ = this.sprite.position.z;
+
+  if (this.keys.w) { newZ -= speed; this.lastDirection = "Back"; }
+  if (this.keys.s) { newZ += speed; this.lastDirection = "Front"; }
+  if (this.keys.a) { newX -= speed; this.lastDirection = "Left"; }
+  if (this.keys.d) { newX += speed; this.lastDirection = "Right"; }
+
+  // Clamp inside room
+  if (this.boundary) {
+    newX = Math.max(this.boundary.minX, Math.min(this.boundary.maxX, newX));
+    newZ = Math.max(this.boundary.minZ, Math.min(this.boundary.maxZ, newZ));
   }
+
+  this.sprite.position.x = newX;
+  this.sprite.position.z = newZ;
+}
 
   setAnimation() {
     // Walking
