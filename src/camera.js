@@ -1,8 +1,6 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-export function createCamera(rendererDom, initialPosition = new THREE.Vector3(0, 5, 10)) {
-  // Camera
+export function createCamera(initialPosition = new THREE.Vector3(0, 5, 10)) {
   const camera = new THREE.PerspectiveCamera(
     35,
     window.innerWidth / window.innerHeight,
@@ -11,23 +9,17 @@ export function createCamera(rendererDom, initialPosition = new THREE.Vector3(0,
   );
   camera.position.copy(initialPosition);
 
-  // OrbitControls
-  const controls = new OrbitControls(camera, rendererDom);
-  controls.enableDamping = true;
-  controls.enablePan = false;
-  controls.enableZoom = false;
-  controls.minDistance = 10;
-  controls.maxDistance = 10;
+  // Function to follow player
+  camera.follow = (playerSprite, offset = new THREE.Vector3(0, 5, 10)) => {
+    camera.position.copy(playerSprite.position).add(offset);
+    camera.lookAt(playerSprite.position);
+  };
 
-  const fixedAngle = Math.PI / 2.5; // ~30 degrees
-  controls.minPolarAngle = fixedAngle;
-  controls.maxPolarAngle = fixedAngle;
-
-  // Handle resize
+  // Handle window resize
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
   });
 
-  return { camera, controls };
+  return camera;
 }

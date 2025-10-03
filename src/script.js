@@ -1,9 +1,8 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Pane } from "tweakpane";
-import { loadSpriteSheet, setFrame, createSprite } from "./spriteLoader.js";
 import { createRoom } from "./room.js";
 import { createCamera } from "./camera.js";
+import { Player } from "./player.js";
 
 // Debug Pane
 const pane = new Pane();
@@ -17,7 +16,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-const { camera, controls } = createCamera(renderer.domElement);
+const camera = createCamera(); // no OrbitControls
 
 // Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -25,37 +24,16 @@ const pointLight = new THREE.PointLight(0xffffff, 50);
 pointLight.position.set(0, 5, 0);
 scene.add(pointLight);
 
-// Sprite setup
-const framesHoriz = 4;
-const framesVert = 10;
-
-const spriteSheet = loadSpriteSheet(
-  "Char/siteguy-Sheet.png",
-  framesHoriz,
-  framesVert,
-  () => console.log("✅ Sprite loaded")
-);
-
-const sprite = createSprite(spriteSheet);
-sprite.position.y = -4.2; // above the floor
-scene.add(sprite);
-
-// Start idle frame
-setFrame(spriteSheet, 0, framesHoriz, framesVert);
-
 // Room
 const room = createRoom(10, 0xF5F5DC, true);
 scene.add(room);
 
-// Function to update camera and sprite each frame
+// Player
+const player = new Player();
+scene.add(player.sprite);
+
 function updateCamera() {
-  if (!sprite) return;
-
-  controls.target.copy(sprite.position);
-  controls.update();
-
-  // Billboard effect
-  sprite.quaternion.copy(camera.quaternion);
+  camera.follow(player.sprite);
 }
 
 // Handle Resize
@@ -65,10 +43,11 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Render Loop
-const renderLoop = () => {
+// Render loop
+function renderLoop() {
+  player.update();
   updateCamera();
   renderer.render(scene, camera);
   requestAnimationFrame(renderLoop);
-};
+}
 renderLoop();
