@@ -25,8 +25,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const camera = createCamera(); // no OrbitControls
 
 // Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.2));
-const pointLight = new THREE.PointLight(0xffffff, 100);
+scene.add(new THREE.AmbientLight(0xFFE5B4, 0.2));
+const pointLight = new THREE.PointLight(0xFFE5B4, 100);
 pointLight.position.set(0, -5, 0);
 pointLight.castShadow = true
 scene.add(pointLight);
