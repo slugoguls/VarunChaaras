@@ -11,8 +11,8 @@ export class Player {
     this.framesVert = 10;
     this.spriteSheet = loadSpriteSheet("Char/siteguy-Sheet.png", this.framesHoriz, this.framesVert);
     this.sprite = createSprite(this.spriteSheet);
-    this.sprite.position.y = -18.8; // above the floor
-    this.sprite.scale.set(1.5, 1.5)
+    this.sprite.position.y = -18; // above the floor
+    this.sprite.scale.set(2, 2)
 
     // Animation state
     this.currentFrame = 0;
