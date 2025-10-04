@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { createSprite, setFrame, loadSpriteSheet } from "./spriteLoader.js";
 
 export class Player {
@@ -12,7 +13,7 @@ export class Player {
     this.spriteSheet = loadSpriteSheet("Char/siteguy-Sheet.png", this.framesHoriz, this.framesVert);
     this.sprite = createSprite(this.spriteSheet);
     this.sprite.position.y = -13.4; // above the floor
-    this.sprite.scale.set(2, 2)
+    this.sprite.scale.set(2, 2);
 
     // Animation state
     this.currentFrame = 0;
@@ -50,24 +51,44 @@ export class Player {
     if (this.keys.hasOwnProperty(key)) this.keys[key] = false;
   }
 
-move(speed = 0.03) {
-  let newX = this.sprite.position.x;
-  let newZ = this.sprite.position.z;
+  move(speed = 0.03, colliders = []) {
+    let newX = this.sprite.position.x;
+    let newZ = this.sprite.position.z;
 
-  if (this.keys.w) { newZ -= speed; this.lastDirection = "Back"; }
-  if (this.keys.s) { newZ += speed; this.lastDirection = "Front"; }
-  if (this.keys.a) { newX -= speed; this.lastDirection = "Left"; }
-  if (this.keys.d) { newX += speed; this.lastDirection = "Right"; }
+    if (this.keys.w) { newZ -= speed; this.lastDirection = "Back"; }
+    if (this.keys.s) { newZ += speed; this.lastDirection = "Front"; }
+    if (this.keys.a) { newX -= speed; this.lastDirection = "Left"; }
+    if (this.keys.d) { newX += speed; this.lastDirection = "Right"; }
 
-  // Clamp inside room
-  if (this.boundary) {
-    newX = Math.max(this.boundary.minX, Math.min(this.boundary.maxX, newX));
-    newZ = Math.max(this.boundary.minZ, Math.min(this.boundary.maxZ, newZ));
+    // Create a proposed bounding box for the new position
+    const proposedBox = new THREE.Box3().setFromObject(this.sprite);
+    proposedBox.min.x += newX - this.sprite.position.x;
+    proposedBox.max.x += newX - this.sprite.position.x;
+    proposedBox.min.z += newZ - this.sprite.position.z;
+    proposedBox.max.z += newZ - this.sprite.position.z;
+
+    // Check collision with all colliders
+    let collision = false;
+    for (const { model } of colliders) {
+      const objectBox = new THREE.Box3().setFromObject(model);
+      if (proposedBox.intersectsBox(objectBox)) {
+        collision = true;
+        break;
+      }
+    }
+
+    // Only update position if no collision
+    if (!collision) {
+      // Clamp inside room boundaries
+      if (this.boundary) {
+        newX = Math.max(this.boundary.minX, Math.min(this.boundary.maxX, newX));
+        newZ = Math.max(this.boundary.minZ, Math.min(this.boundary.maxZ, newZ));
+      }
+
+      this.sprite.position.x = newX;
+      this.sprite.position.z = newZ;
+    }
   }
-
-  this.sprite.position.x = newX;
-  this.sprite.position.z = newZ;
-}
 
   setAnimation() {
     // Walking
@@ -83,7 +104,7 @@ move(speed = 0.03) {
     this.setAnimation();
 
     if (this.currentAnim.length === 1) {
-      // idle single frame (not used here, all idles have 3 frames)
+      // idle single frame
       setFrame(this.spriteSheet, this.currentAnim[0], this.framesHoriz, this.framesVert);
       this.currentFrame = 0;
       this.frameCounter = 0;
@@ -99,8 +120,8 @@ move(speed = 0.03) {
     }
   }
 
-  update() {
-    this.move();
+  update(colliders = []) {
+    this.move(0.03, colliders);
     this.animate();
   }
 }
