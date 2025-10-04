@@ -43,9 +43,9 @@ scene.add(room);
 async function addTable(scene) {
   console.log("[DEBUG] Attempting to load table.glb...");
   try {
-    const { model, collider } = await loadGLB("Models/table.glb", {
+    const { model, collider } = await loadGLB("Models/table2.glb", {
       position: new THREE.Vector3(0, -10, -5),
-      scale: new THREE.Vector3(2, 1.75, 2),
+      scale: new THREE.Vector3(3, 2, 3.5),
     });
 
     if (!model) throw new Error("Model is undefined");
@@ -86,6 +86,27 @@ async function addCarpet(scene) {
   }
 }
 addCarpet(scene);
+
+// Load computer GLB
+async function addComputer(scene) {
+  console.log("[DEBUG] Attempting to load computer.glb...");
+  try {
+    const { model } = await loadGLB("Models/computer.glb", {
+      position: new THREE.Vector3(-0.1, -8.5, -4.75),
+      scale: new THREE.Vector3(0.5, 0.5, 0.5),
+      rotation: new THREE.Euler(0, Math.PI, 0),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    console.log("[SUCCESS] Computer loaded.");
+  } catch (error) {
+    console.error("❌ Failed to load computer.glb:", error);
+  }
+}
+addComputer(scene);
 
 // Player
 const player = new Player(boundary, 0.8, 3);
