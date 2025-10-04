@@ -44,7 +44,7 @@ async function addTable(scene) {
   console.log("[DEBUG] Attempting to load table.glb...");
   try {
     const { model, collider } = await loadGLB("Models/table.glb", {
-      position: new THREE.Vector3(0, -15, -10),
+      position: new THREE.Vector3(0, -15, -5),
       scale: new THREE.Vector3(2, 2, 3),
     });
 
@@ -55,7 +55,7 @@ async function addTable(scene) {
     // Optional: add visual debug helper
     if (collider) {
       const helper = new THREE.Box3Helper(collider, 0xff0000);
-      helper.visible = true; // set to true to see bounding box
+      helper.visible = false; // set to true to see bounding box
       scene.add(helper);
     }
 
@@ -68,8 +68,11 @@ async function addTable(scene) {
 addTable(scene);
 
 // Player
-const player = new Player(boundary);
+const player = new Player(boundary, 0.8, 3);
 scene.add(player.sprite);
+const collisionBox = player.getCollisionBox();
+scene.add(collisionBox);
+player.toggleCollisionBox(false);
 
 // Camera follow
 function updateCamera() {

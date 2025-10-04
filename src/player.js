@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { createSprite, setFrame, loadSpriteSheet } from "./spriteLoader.js";
 
 export class Player {
-  constructor(boundary) {
+  constructor(boundary, width = 1, height = 1) {
     this.boundary = boundary;
     // Movement keys
     this.keys = { w: false, a: false, s: false, d: false };
@@ -14,6 +14,15 @@ export class Player {
     this.sprite = createSprite(this.spriteSheet);
     this.sprite.position.y = -13.4; // above the floor
     this.sprite.scale.set(2, 2);
+
+    // Add collision box
+    const box = new THREE.Box3();
+    box.setFromCenterAndSize(
+      this.sprite.position,
+      new THREE.Vector3(width, height, 1)
+    );
+    this.collisionBox = new THREE.Box3Helper(box, 0x00ff00);
+    this.collisionBox.visible = false;
 
     // Animation state
     this.currentFrame = 0;
@@ -61,11 +70,8 @@ export class Player {
     if (this.keys.d) { newX += speed; this.lastDirection = "Right"; }
 
     // Create a proposed bounding box for the new position
-    const proposedBox = new THREE.Box3().setFromObject(this.sprite);
-    proposedBox.min.x += newX - this.sprite.position.x;
-    proposedBox.max.x += newX - this.sprite.position.x;
-    proposedBox.min.z += newZ - this.sprite.position.z;
-    proposedBox.max.z += newZ - this.sprite.position.z;
+    const proposedBox = this.collisionBox.box.clone();
+    proposedBox.translate(new THREE.Vector3(newX - this.sprite.position.x, 0, newZ - this.sprite.position.z));
 
     // Check collision with all colliders
     let collision = false;
@@ -123,5 +129,17 @@ export class Player {
   update(colliders = []) {
     this.move(0.03, colliders);
     this.animate();
+    this.collisionBox.box.setFromCenterAndSize(
+      this.sprite.position,
+      new THREE.Vector3(this.collisionBox.box.getSize(new THREE.Vector3()).x, this.collisionBox.box.getSize(new THREE.Vector3()).y, 1)
+    );
+  }
+
+  getCollisionBox() {
+    return this.collisionBox;
+  }
+
+  toggleCollisionBox(visible) {
+    this.collisionBox.visible = visible;
   }
 }
