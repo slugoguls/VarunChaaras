@@ -30,8 +30,8 @@ scene.add(camera);
 
 // Lights
 scene.add(new THREE.AmbientLight(0xFFE5B4, 0.2));
-const pointLight = new THREE.PointLight(0xFFE5B4, 100);
-pointLight.position.set(0, 0, 0);
+const pointLight = new THREE.PointLight(0xFFD966, 50);
+pointLight.position.set(-8, -6, -5);
 pointLight.castShadow = true;
 scene.add(pointLight);
 
@@ -318,6 +318,7 @@ async function addLamp(scene) {
   }
 }
 addLamp(scene);
+
 
 // Player
 const player = new Player(boundary, 0.8, 3);
