@@ -223,6 +223,73 @@ async function addSideTable(scene) {
 }
 addSideTable(scene);
 
+// Load guitar GLB
+async function addGuitar(scene) {
+  console.log("[DEBUG] Attempting to load guitar.glb...");
+  try {
+    const { model } = await loadGLB("Models/guitar.glb", {
+      position: new THREE.Vector3(-9.5, -10, -5),
+      scale: new THREE.Vector3(2, 2, 2),
+      rotation: new THREE.Euler(0, Math.PI , 0),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Create a custom collider for the guitar
+    const colliderGeometry = new THREE.BoxGeometry(1.5, 4, 1.2); // Adjust size as needed
+    const colliderMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+    const guitarCollider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+
+    // Position and rotate the collider to match the guitar
+    guitarCollider.position.copy(model.position);
+    guitarCollider.rotation.copy(model.rotation);
+
+    scene.add(guitarCollider);
+
+    // Optional: add visual debug helper
+    const helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(guitarCollider), 0x00ff00);
+    helper.visible = false; // set to true to see bounding box
+    scene.add(helper);
+
+    colliders.push({ model: guitarCollider });
+
+    console.log("[SUCCESS] Guitar loaded.");
+  } catch (error) {
+    console.error("❌ Failed to load guitar.glb:", error);
+  }
+}
+addGuitar(scene);
+
+// Load posters GLB
+async function addPosters(scene) {
+  console.log("[DEBUG] Attempting to load posters.glb...");
+  try {
+    const { model, collider } = await loadGLB("Models/posters.glb", {
+      position: new THREE.Vector3(-8, -8, -9.5),
+      scale: new THREE.Vector3(1, 1, 1),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Optional: add visual debug helper
+    if (collider) {
+      const helper = new THREE.Box3Helper(collider, 0xff0000);
+      helper.visible = false; // set to true to see bounding box
+      scene.add(helper);
+    }
+
+    colliders.push({ model });
+    console.log("[SUCCESS] Posters loaded with collider.");
+  } catch (error) {
+    console.error("❌ Failed to load posters.glb:", error);
+  }
+}
+addPosters(scene);
+
 // Player
 const player = new Player(boundary, 0.8, 3);
 scene.add(player.sprite);
