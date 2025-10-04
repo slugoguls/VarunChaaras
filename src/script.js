@@ -108,6 +108,121 @@ async function addComputer(scene) {
 }
 addComputer(scene);
 
+// Load chair GLB
+async function addChair(scene) {
+  console.log("[DEBUG] Attempting to load chair.glb...");
+  try {
+    const { model } = await loadGLB("Models/chair.glb", {
+      position: new THREE.Vector3(1, -10, -3),
+      scale: new THREE.Vector3(1.25, 1.25, 1.25),
+      rotation: new THREE.Euler(0, Math.PI * -0.7, 0),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Create a custom collider for the chair
+    const colliderGeometry = new THREE.BoxGeometry(1, 1, 1); // Adjust size as needed
+    const colliderMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+    const chairCollider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+
+    // Position and rotate the collider to match the chair
+    chairCollider.position.copy(model.position);
+    chairCollider.rotation.copy(model.rotation);
+
+    scene.add(chairCollider);
+
+    // Optional: add visual debug helper
+    const helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(chairCollider), 0x00ff00);
+    helper.visible = false; // set to true to see bounding box
+    scene.add(helper);
+
+    colliders.push({ model: chairCollider });
+
+    console.log("[SUCCESS] Chair loaded.");
+  } catch (error) {
+    console.error("❌ Failed to load chair.glb:", error);
+  }
+}
+addChair(scene);
+
+// Load record table GLB
+async function addRecordTable(scene) {
+  console.log("[DEBUG] Attempting to load record_table.glb...");
+  try {
+    const { model, collider } = await loadGLB("Models/record_table.glb", {
+      position: new THREE.Vector3(-7.5, -10, -8.5),
+      scale: new THREE.Vector3(0.1, 0.1, 0.1),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Optional: add visual debug helper
+    if (collider) {
+      const helper = new THREE.Box3Helper(collider, 0xff0000);
+      helper.visible = false; // set to true to see bounding box
+      scene.add(helper);
+    }
+
+    colliders.push({ model });
+    console.log("[SUCCESS] Record table loaded with collider.");
+  } catch (error) {
+    console.error("❌ Failed to load record_table.glb:", error);
+  }
+}
+addRecordTable(scene);
+
+// Load record player GLB
+async function addRecordPlayer(scene) {
+  console.log("[DEBUG] Attempting to load record_player.glb...");
+  try {
+    const { model } = await loadGLB("Models/record_player.glb", {
+      position: new THREE.Vector3(-9, -9, -8.5),
+      scale: new THREE.Vector3(3.5, 3.5, 3.5),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    console.log("[SUCCESS] Record player loaded.");
+  } catch (error) {
+    console.error("❌ Failed to load record_player.glb:", error);
+  }
+}
+addRecordPlayer(scene);
+
+// Load side table GLB
+async function addSideTable(scene) {
+  console.log("[DEBUG] Attempting to load side_table.glb...");
+  try {
+    const { model, collider } = await loadGLB("Models/side_table.glb", {
+      position: new THREE.Vector3(-9, -10, -8.5),
+      scale: new THREE.Vector3(1.5, 3, 1.5),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Optional: add visual debug helper
+    if (collider) {
+      const helper = new THREE.Box3Helper(collider, 0xff0000);
+      helper.visible = false; // set to true to see bounding box
+      scene.add(helper);
+    }
+
+    colliders.push({ model });
+    console.log("[SUCCESS] Side table loaded with collider.");
+  } catch (error) {
+    console.error("❌ Failed to load side_table.glb:", error);
+  }
+}
+addSideTable(scene);
+
 // Player
 const player = new Player(boundary, 0.8, 3);
 scene.add(player.sprite);
