@@ -75,9 +75,8 @@ export class Player {
 
     // Check collision with all colliders
     let collision = false;
-    for (const { model } of colliders) {
-      const objectBox = new THREE.Box3().setFromObject(model);
-      if (proposedBox.intersectsBox(objectBox)) {
+    for (const { box } of colliders) {
+      if (proposedBox.intersectsBox(box)) {
         collision = true;
         break;
       }
