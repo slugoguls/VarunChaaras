@@ -12,7 +12,7 @@ const boundary = {
   minX: -wall / 2 + 0.5,
   maxX: wall / 2 - 0.5,
   minZ: -wall / 2 + 1.5,
-  maxZ: wall / 2 - 0.5
+  maxZ: 3
 };
 
 // Scene
@@ -44,8 +44,8 @@ async function addTable(scene) {
   console.log("[DEBUG] Attempting to load table.glb...");
   try {
     const { model, collider } = await loadGLB("Models/table.glb", {
-      position: new THREE.Vector3(0, -15, -5),
-      scale: new THREE.Vector3(2, 2, 3),
+      position: new THREE.Vector3(0, -10, -5),
+      scale: new THREE.Vector3(3, 1.5, 3),
     });
 
     if (!model) throw new Error("Model is undefined");
@@ -74,9 +74,16 @@ const collisionBox = player.getCollisionBox();
 scene.add(collisionBox);
 player.toggleCollisionBox(false);
 
+const cameraBoundary = {
+  minX: -roomSize / 2 + 5,
+  maxX: roomSize / 2 - 5,
+  minZ: -roomSize / 2 + 5,
+  maxZ: roomSize / 2
+};
+
 // Camera follow
 function updateCamera() {
-  camera.follow(player.sprite);
+  camera.follow(player.sprite, new THREE.Vector3(0, 4.5, 15), cameraBoundary);
 }
 
 // Window resize
