@@ -290,6 +290,35 @@ async function addPosters(scene) {
 }
 addPosters(scene);
 
+// Load lamp GLB
+async function addLamp(scene) {
+  console.log("[DEBUG] Attempting to load lamp.glb...");
+  try {
+    const { model, collider } = await loadGLB("Models/lamp.glb", {
+      position: new THREE.Vector3(-9.8, -6, -6.5),
+      scale: new THREE.Vector3(1, 1, 1),
+      rotation: new THREE.Euler(0, 0, -Math.PI / 6),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    // Optional: add visual debug helper
+    if (collider) {
+      const helper = new THREE.Box3Helper(collider, 0xff0000);
+      helper.visible = false; // set to true to see bounding box
+      scene.add(helper);
+    }
+
+    colliders.push({ model });
+    console.log("[SUCCESS] Lamp loaded with collider.");
+  } catch (error) {
+    console.error("❌ Failed to load lamp.glb:", error);
+  }
+}
+addLamp(scene);
+
 // Player
 const player = new Player(boundary, 0.8, 3);
 scene.add(player.sprite);
