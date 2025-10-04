@@ -45,7 +45,7 @@ async function addTable(scene) {
   try {
     const { model, collider } = await loadGLB("Models/table.glb", {
       position: new THREE.Vector3(0, -10, -5),
-      scale: new THREE.Vector3(3, 1.5, 3),
+      scale: new THREE.Vector3(2, 1.75, 2),
     });
 
     if (!model) throw new Error("Model is undefined");
@@ -66,6 +66,26 @@ async function addTable(scene) {
   }
 }
 addTable(scene);
+
+// Load carpet GLB
+async function addCarpet(scene) {
+  console.log("[DEBUG] Attempting to load carpet.glb...");
+  try {
+    const { model } = await loadGLB("Models/carpet.glb", {
+      position: new THREE.Vector3(0, -10.09, -2),
+      scale: new THREE.Vector3(8, 1, 8),
+    });
+
+    if (!model) throw new Error("Model is undefined");
+
+    scene.add(model);
+
+    console.log("[SUCCESS] Carpet loaded.");
+  } catch (error) {
+    console.error("❌ Failed to load carpet.glb:", error);
+  }
+}
+addCarpet(scene);
 
 // Player
 const player = new Player(boundary, 0.8, 3);
