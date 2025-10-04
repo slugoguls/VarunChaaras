@@ -6,13 +6,13 @@ import { Player } from "./player.js";
 import { loadGLB } from "./loadGLB.js";
 
 const colliders = [];
-const roomSize = 30; // player boundary
+const roomSize = 20; // player boundary
 const wall = 20;      // wall extension beyond player boundary
 const boundary = {
   minX: -wall / 2 + 0.5,
   maxX: wall / 2 - 0.5,
-  minZ: -wall / 1.5,
-  maxZ: wall / 3 - 0.5
+  minZ: -wall / 2 + 1.5,
+  maxZ: wall / 2 - 0.5
 };
 
 // Scene
@@ -31,7 +31,7 @@ scene.add(camera);
 // Lights
 scene.add(new THREE.AmbientLight(0xFFE5B4, 0.2));
 const pointLight = new THREE.PointLight(0xFFE5B4, 100);
-pointLight.position.set(0, -5, 0);
+pointLight.position.set(0, 0, 0);
 pointLight.castShadow = true;
 scene.add(pointLight);
 

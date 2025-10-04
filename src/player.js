@@ -12,7 +12,7 @@ export class Player {
     this.framesVert = 10;
     this.spriteSheet = loadSpriteSheet("Char/siteguy-Sheet.png", this.framesHoriz, this.framesVert);
     this.sprite = createSprite(this.spriteSheet);
-    this.sprite.position.y = -13.4; // above the floor
+    this.sprite.position.y = -8.5; // above the floor
     this.sprite.scale.set(2, 2);
 
     // Add collision box
