@@ -29,7 +29,7 @@ scene.add(camera);
 // === LIGHTING ===
 scene.add(new THREE.AmbientLight(0xFFE5B4, 0.1));
 const pointLight = new THREE.PointLight(0xFFD966, 50);
-pointLight.position.set(-8, -5.5, -4);
+pointLight.position.set(-8, -5.5, -6);
 pointLight.distance = 10
 pointLight.rotateY = Math.PI
 pointLight.castShadow = true;
