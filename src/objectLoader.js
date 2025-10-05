@@ -45,7 +45,8 @@ export async function loadAllObjects(scene, colliders) {
   // --- Objects ---
   await addObject({ path: "Models/table2.glb", position: new THREE.Vector3(0, -10, -5), scale: new THREE.Vector3(3, 2, 3.5) });
   await addObject({ path: "Models/carpet.glb", position: new THREE.Vector3(0, -10.09, -2), scale: new THREE.Vector3(8, 1, 8), addToColliders: false });
-  await addObject({ path: "Models/computer.glb", position: new THREE.Vector3(-0.1, -8.5, -4.75), scale: new THREE.Vector3(0.5, 0.5, 0.5), rotation: new THREE.Euler(0, Math.PI, 0) });
+  await addObject({ path: "Models/computer.glb", position: new THREE.Vector3(0.5, -8.5, -4.75), scale: new THREE.Vector3(0.5, 0.5, 0.5), rotation: new THREE.Euler(0, Math.PI, 0) });
+  await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(-0.8, -8.7, -5), scale: new THREE.Vector3(2, 2, 2), rotation: new THREE.Euler(0, Math.PI/1.5 , 0) });
 
   // Chair with custom collider
   await addObject({
