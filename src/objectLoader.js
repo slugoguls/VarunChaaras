@@ -115,4 +115,5 @@ export async function loadAllObjects(scene, colliders) {
   });
 
   await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(-9.8, -6, -6.5), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, 0, -Math.PI/6) });
+  await addObject({ path: "Models/Tape.glb", position: new THREE.Vector3(1.6, -8.55, -5.5), scale: new THREE.Vector3(0.2, 0.2, 0.2) });
 }
