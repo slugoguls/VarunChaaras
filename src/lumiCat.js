@@ -116,7 +116,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
       else {
         changeState("walk");
         direction = Math.random() > 0.5 ? 1 : -1;
-        walkAxis = Math.random() > 0.5 ? 'x' : 'z'; // Randomly choose axis
+        walkAxis = Math.random() > 0.3 ? 'x' : 'z'; // Randomly choose axis
         if (walkAxis === 'x') {
           cat.scale.x = -Math.abs(cat.scale.x) * direction;
         }
