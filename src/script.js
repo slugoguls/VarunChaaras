@@ -3,6 +3,7 @@ import { createRoom } from "./room.js";
 import { createCamera } from "./camera.js";
 import { Player } from "./player.js";
 import { loadAllObjects } from "./objectLoader.js";
+import { loadAllPaintings } from "./paintingLoader.js";
 
 const colliders = [];
 const roomSize = 20;
@@ -17,6 +18,7 @@ const canvas = document.querySelector("canvas.threejs");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
 
 // Camera
 const camera = createCamera();
@@ -36,6 +38,8 @@ scene.add(room);
 // Load all objects (with colliders intact)
 loadAllObjects(scene, colliders);
 
+await loadAllPaintings(scene);
+
 // Player
 const player = new Player(boundary, 0.8, 3);
 scene.add(player.sprite);
@@ -54,6 +58,26 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    // Enter fullscreen
+    document.documentElement.requestFullscreen().catch((err) => {
+      console.error(`❌ Fullscreen failed: ${err.message}`);
+    });
+  } else {
+    // Exit fullscreen
+    document.exitFullscreen().catch((err) => {
+      console.error(`❌ Exit fullscreen failed: ${err.message}`);
+    });
+  }
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "f") toggleFullscreen();
 });
 
 // Collision checking
