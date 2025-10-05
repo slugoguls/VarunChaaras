@@ -19,6 +19,10 @@ export async function loadAllObjects(scene, colliders) {
       scene.add(model);
       allObjects[path] = model;
 
+      if (path === "Models/redstoneLamp.glb") {
+        // Reverted to original material from GLB model
+      }
+
       let colliderModel = model;
       let box = null;
 
@@ -80,7 +84,7 @@ export async function loadAllObjects(scene, colliders) {
     rotation: new THREE.Euler(0, Math.PI * -0.7, 0),
     customCollider: (model) => {
       const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+      const material = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0 });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.copy(model.position);
       mesh.rotation.copy(model.rotation);

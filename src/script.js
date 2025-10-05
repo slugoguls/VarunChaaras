@@ -27,11 +27,18 @@ const camera = createCamera();
 scene.add(camera);
 
 // === LIGHTING ===
-scene.add(new THREE.AmbientLight(0xFFE5B4, 0.2));
+scene.add(new THREE.AmbientLight(0xFFE5B4, 0.1));
 const pointLight = new THREE.PointLight(0xFFD966, 50);
-pointLight.position.set(-8, -6, -5);
+pointLight.position.set(-8, -5.5, -4);
+pointLight.distance = 10
+pointLight.rotateY = Math.PI
 pointLight.castShadow = true;
 scene.add(pointLight);
+
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 1); // Light, sphere size
+scene.add(pointLightHelper);
+
+
 
 // === ROOM ===
 const room = createRoom(roomSize, 0xF5F5DC, true);

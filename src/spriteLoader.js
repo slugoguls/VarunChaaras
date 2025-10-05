@@ -41,7 +41,9 @@ export function createSprite(texture, aspect = 36 / 64, scale = 2) {
     map: texture,
     transparent: true,
     alphaTest: 0.5,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    emissive: new THREE.Color(0x111111), // Subtle self-illumination
+    emissiveIntensity: 0.1
   });
 
   const geometry = new THREE.PlaneGeometry(aspect * scale, scale);
