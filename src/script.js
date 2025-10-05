@@ -35,10 +35,6 @@ pointLight.rotateY = Math.PI
 pointLight.castShadow = true;
 scene.add(pointLight);
 
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 1); // Light, sphere size
-scene.add(pointLightHelper);
-
-
 
 // === ROOM ===
 const room = createRoom(roomSize, 0xF5F5DC, true);
