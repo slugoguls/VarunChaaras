@@ -84,7 +84,7 @@ function checkCollisions(playerObject) {
 }
 
 // === LUMI CAT ===
-lumi = await createLumiCat(scene, colliders);
+lumi = await createLumiCat(scene, colliders, boundary);
 
 // === RENDER LOOP ===
 const clock = new THREE.Clock();

@@ -42,7 +42,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   scene.add(collisionBoxMesh);
 
   const collisionBox = new THREE.Box3Helper(new THREE.Box3().setFromObject(collisionBoxMesh), 0xff00ff);
-  collisionBox.visible = true;
+  collisionBox.visible = false;
   scene.add(collisionBox);
 
   // Animation states
@@ -67,8 +67,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
       currentFrame = states[newState].start;
       frameTimer = 0;
 
-      material.emissiveIntensity = newState === "sleep" ? 0.4 : 0.6;
-      material.emissiveIntensity = newState === "attack" ? 1.1 : 0.6;
+      material.emissiveIntensity = newState === "sleep" ? 0.3 : 0.5;
+      material.emissiveIntensity = newState === "attack" ? 1.1 : 0.5;
 
       if (newState === "attack") attackCount++;
     }
@@ -105,6 +105,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     return null;
   }
 
+  let walkAxis = 'x';
+
   function updateBehavior(delta) {
     walkTimer -= delta;
     if (walkTimer <= 0 && currentState !== "attack") {
@@ -114,7 +116,10 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
       else {
         changeState("walk");
         direction = Math.random() > 0.5 ? 1 : -1;
-        cat.scale.x = -Math.abs(cat.scale.x) * direction;
+        walkAxis = Math.random() > 0.5 ? 'x' : 'z'; // Randomly choose axis
+        if (walkAxis === 'x') {
+          cat.scale.x = -Math.abs(cat.scale.x) * direction;
+        }
       }
       walkTimer = 3 + Math.random() * 5;
     }
@@ -125,12 +130,19 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     updateBehavior(delta);
 
     if (currentState === "walk") {
-      const nextPos = new THREE.Vector3(cat.position.x + speed * direction, cat.position.y, cat.position.z);
+      let nextPos;
+      if (walkAxis === 'x') {
+        nextPos = new THREE.Vector3(cat.position.x + speed * direction, cat.position.y, cat.position.z);
+      } else { // walkAxis === 'z'
+        nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z + speed * direction);
+      }
       const collisionType = detectCollision(nextPos, playerSprite);
 
       if (collisionType === "object" || collisionType === "wall") {
         direction *= -1;
-        cat.scale.x = Math.abs(cat.scale.x) * direction;
+        if (walkAxis === 'x') {
+          cat.scale.x = Math.abs(cat.scale.x) * direction;
+        }
         changeState("idle");
       } else if (collisionType === "player" && currentState === "sleep") {
         if (attackCount < maxAttackPlays) changeState("attack");
