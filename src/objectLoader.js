@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { loadGLB } from "./loadGLB.js";
 
+export const allObjects = {};
+
 function getMeshBoundingBox(obj) {
   const box = new THREE.Box3();
   obj.traverse((child) => {
@@ -15,6 +17,7 @@ export async function loadAllObjects(scene, colliders) {
     try {
       const { model, collider } = await loadGLB(path, { position, scale, rotation });
       scene.add(model);
+      allObjects[path] = model;
 
       let colliderModel = model;
       let box = null;
@@ -111,6 +114,5 @@ export async function loadAllObjects(scene, colliders) {
     }
   });
 
-  await addObject({ path: "Models/posters.glb", position: new THREE.Vector3(-8, -8, -9.5), scale: new THREE.Vector3(1, 1, 1) });
   await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(-9.8, -6, -6.5), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, 0, -Math.PI/6) });
 }

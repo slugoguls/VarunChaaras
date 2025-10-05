@@ -2,9 +2,10 @@ import * as THREE from "three";
 import { createRoom } from "./room.js";
 import { createCamera } from "./camera.js";
 import { Player } from "./player.js";
-import { loadAllObjects } from "./objectLoader.js";
+import { loadAllObjects, allObjects } from "./objectLoader.js";
 import { loadAllPaintings } from "./paintingLoader.js";
 import { createLumiCat } from "./lumiCat.js";
+import { createUIElements } from "./uiElements.js";
 
 let lumi;
 const colliders = [];
@@ -38,6 +39,11 @@ scene.add(room);
 
 // === OBJECTS ===
 await loadAllObjects(scene, colliders);
+
+const ui = createUIElements(scene);
+const recordPlayer = allObjects["Models/record_player.glb"];
+
+
 
 // === PAINTINGS ===
 const paintings = [];
@@ -141,6 +147,18 @@ function renderLoop() {
       }
     }
   });
+
+  // Record player interaction
+  if (recordPlayer) {
+    const distance = player.sprite.position.distanceTo(recordPlayer.position);
+    if (distance < 2) {
+      ui.eKeySprite.visible = true;
+      ui.eKeySprite.position.set(recordPlayer.position.x, recordPlayer.position.y + 1.5, recordPlayer.position.z);
+      ui.updateAnimation(delta);
+    } else {
+      ui.eKeySprite.visible = false;
+    }
+  }
 
   // Update player
   player.update(colliders);
