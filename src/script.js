@@ -40,7 +40,40 @@ scene.add(room);
 await loadAllObjects(scene, colliders);
 
 // === PAINTINGS ===
-await loadAllPaintings(scene);
+const paintings = [];
+await loadAllPaintings(scene, paintings);
+
+// === MODAL ===
+const modal = document.getElementById("painting-modal");
+const modalImg = document.getElementById("painting-img");
+const closeBtn = document.querySelector(".close");
+
+closeBtn.addEventListener("click", () => {
+  modal.style.display = "none";
+});
+
+// === RAYCASTER ===
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener("click", (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(paintings);
+
+  if (intersects.length > 0) {
+    const clickedPainting = intersects[0].object;
+    if (clickedPainting.userData.isPainting && clickedPainting.userData.glowing) {
+      modal.style.display = "block";
+      const fileName = clickedPainting.userData.file;
+      const dotIndex = fileName.lastIndexOf('.');
+      const newFileName = fileName.slice(0, dotIndex) + 'pic' + fileName.slice(dotIndex);
+      modalImg.src = `paintings/${newFileName}`;
+    }
+  }
+});
 
 // === PLAYER ===
 const player = new Player(boundary, 0.8, 3);
@@ -91,6 +124,23 @@ const clock = new THREE.Clock();
 
 function renderLoop() {
   const delta = clock.getDelta();
+
+  // Proximity glow for paintings
+  const glowDistance = 3;
+  paintings.forEach(painting => {
+    if (painting.userData.isPainting) {
+      const distance = player.sprite.position.distanceTo(painting.position);
+      if (distance < glowDistance) {
+        painting.material.emissive.set(0xFFFFFF);
+        painting.material.emissiveIntensity = 0.001;
+        painting.userData.glowing = true;
+      } else {
+        painting.material.emissive.set(0x000000);
+        painting.material.emissiveIntensity = 0;
+        painting.userData.glowing = false;
+      }
+    }
+  });
 
   // Update player
   player.update(colliders);

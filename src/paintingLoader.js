@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export async function loadAllPaintings(scene) {
+export async function loadAllPaintings(scene, paintings) {
   const loader = new THREE.TextureLoader();
 
   // Helper to load a texture with chosen filtering + correct aspect ratio
@@ -27,6 +27,9 @@ export async function loadAllPaintings(scene) {
         mesh.position.copy(position);
         if (rotation) mesh.rotation.copy(rotation);
 
+        mesh.userData = { isPainting: true, file };
+
+        paintings.push(mesh);
         scene.add(mesh);
         resolve(mesh);
       },
@@ -37,7 +40,7 @@ export async function loadAllPaintings(scene) {
 };
 
   // Define all your paintings here
-const paintings = [
+const paintingsData = [
   {
     file: "Batlamp.png",
     position: new THREE.Vector3(9.9, -8, -8), // on right wall
@@ -62,7 +65,7 @@ const paintings = [
     scale: 2,
   },
   {
-    file: "Vw.png",
+    file: "Vw1.png",
     position: new THREE.Vector3(4.5, -7, -9.9),
     scale: 4,
   },
@@ -76,7 +79,7 @@ const paintings = [
 
   // Load all asynchronously
   await Promise.all(
-  paintings.map((p) =>
+  paintingsData.map((p) =>
     loadPainting(p.file, p.position, p.scale, p.rotation)
   )
 );
