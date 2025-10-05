@@ -43,10 +43,31 @@ export async function loadAllObjects(scene, colliders) {
   }
 
   // --- Objects ---
-  await addObject({ path: "Models/table2.glb", position: new THREE.Vector3(0, -10, -5), scale: new THREE.Vector3(3, 2, 3.5) });
+  await addObject({
+  path: "Models/table2.glb",
+  position: new THREE.Vector3(0, -10, -5),
+  scale: new THREE.Vector3(3, 2, 3.5),
+  customCollider: (model) => {
+    // Create invisible collision box
+    const geometry = new THREE.BoxGeometry(3.8, 1, 3); // adjust size to match table top
+    const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(model.position);
+    mesh.position.y += 2; // lift collider to roughly match table height
+    mesh.rotation.copy(model.rotation);
+
+    // Optional: visualize collider helper
+    const helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(mesh), 0x00ff00);
+    helper.visible = false; // set to true to debug
+    scene.add(helper);
+
+    return mesh;
+  }
+});
+
   await addObject({ path: "Models/carpet.glb", position: new THREE.Vector3(0, -10.09, -2), scale: new THREE.Vector3(8, 1, 8), addToColliders: false });
-  await addObject({ path: "Models/computer.glb", position: new THREE.Vector3(0.5, -8.5, -4.75), scale: new THREE.Vector3(0.5, 0.5, 0.5), rotation: new THREE.Euler(0, Math.PI, 0) });
-  await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(-0.8, -8.7, -5), scale: new THREE.Vector3(2, 2, 2), rotation: new THREE.Euler(0, Math.PI/1.5 , 0) });
+  await addObject({ path: "Models/computer.glb", position: new THREE.Vector3(0.5, -8.5, -4.75), scale: new THREE.Vector3(0.5, 0.5, 0.5), rotation: new THREE.Euler(0, Math.PI, 0), addToColliders: false  });
+  await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(-0.8, -8.7, -5), scale: new THREE.Vector3(2, 2, 2), rotation: new THREE.Euler(0, Math.PI/1.5 , 0), addToColliders: false  });
 
   // Chair with custom collider
   await addObject({
