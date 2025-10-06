@@ -27,23 +27,27 @@ const camera = createCamera();
 scene.add(camera);
 
 // === LIGHTING ===
-scene.add(new THREE.AmbientLight(0xFFE5B4, 0.1));
+scene.add(new THREE.AmbientLight(0xFFE5B4, 0.05));
 const pointLight = new THREE.PointLight(0xFFD966, 25);
-pointLight.position.set(-8, -5, -2);
-pointLight.distance = 10
-pointLight.rotateY = Math.PI
+pointLight.position.set(-8, -6.5, 0);
+pointLight.distance = 20
+pointLight.decay = 1.5
+// pointLight.rotateY = Math.PI
 pointLight.castShadow = true;
 scene.add(pointLight);
 
-const pointLight2 = new THREE.PointLight(0xFFD966, 25);
+
+const pointLight2 = new THREE.PointLight(0xFFD966, 35);
 pointLight2.position.set(7, -4.5, -5);
-pointLight2.distance = 10
+pointLight2.distance = 8
+pointLight2.decay = 1
 pointLight2.castShadow = true;
 scene.add(pointLight2);
 
-const pointLight3 = new THREE.PointLight(0xFFFFFF, 15);
-pointLight3.position.set(5.75, -7, 2);
-pointLight3.distance = 5
+const pointLight3 = new THREE.PointLight(0xFFD966, 15);
+pointLight3.position.set(5.5, -8.25, 0.5);
+pointLight3.distance = 7.5
+pointLight3.decay = 2
 pointLight3.castShadow = true;
 scene.add(pointLight3);
 

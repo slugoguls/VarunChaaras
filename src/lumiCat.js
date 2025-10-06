@@ -18,7 +18,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     transparent: true,
     alphaTest: 0.5,
     side: THREE.DoubleSide,
-    emissive: new THREE.Color(0xffff0),
+    emissive: new THREE.Color(0xffffff),
     emissiveIntensity: 0,
     emissiveMap: texture
   });

@@ -100,10 +100,9 @@ export async function loadAllObjects(scene, colliders) {
   await addObject({ path: "Models/record_player.glb", position: new THREE.Vector3(-7.25, -9, -8.5), scale: new THREE.Vector3(3.5, 3.5, 3.5) });
   await addObject({ path: "Models/side_table.glb", position: new THREE.Vector3(-7.25, -10, -8.5), scale: new THREE.Vector3(1.5, 3, 1.5) });
 
-  await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(-9.8, -5, -3), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, 0, -Math.PI/6) });
+  await addObject({ path: "Models/longlamp.glb", position: new THREE.Vector3(-9, -8, -1), scale: new THREE.Vector3(1, 1.5, 1), rotation: new THREE.Euler(0, 0, 0) });
   await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(7.5, -4.5, -9.75), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, Math.PI/2, Math.PI/4) });
 
-  await addObject({ path: "Models/Tape.glb", position: new THREE.Vector3(1.6, -8.55, -5.5), scale: new THREE.Vector3(0.2, 0.2, 0.2) });
   await addObject({ path: "Models/beanbag.glb", position: new THREE.Vector3(5, -10, 2.5), scale: new THREE.Vector3(5, 5, 5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
   await addObject({ path: "Models/bedc.glb", position: new THREE.Vector3(-9, -10, -6.75), scale: new THREE.Vector3(1, 1, 1.5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
   await addObject({ path: "Models/crafting table.glb", position: new THREE.Vector3(-9.9, -8.25, -3.25), scale: new THREE.Vector3(0.15, 0.15, 0.15), rotation: new THREE.Euler(0, 0, 0)  });
