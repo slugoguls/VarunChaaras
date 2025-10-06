@@ -29,14 +29,21 @@ camera.add(listener);
 scene.add(camera);
 
 // === AUDIO ===
-const sound = new THREE.Audio(listener);
+const sound = new THREE.PositionalAudio(listener);
 const audioLoader = new THREE.AudioLoader();
 let isPlaying = false;
 
 audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {
     sound.setBuffer(buffer);
     sound.setLoop(true);
-    sound.setVolume(0.5);
+    sound.setVolume(2); // Adjust initial volume, spatialization will handle distance
+
+    // Configure spatial audio
+    sound.setDistanceModel('linear'); // More predictable falloff
+    sound.setRolloffFactor(1); // How quickly the volume falls off
+    sound.setRefDistance(5); // Distance at which volume is 100% (closer to the object)
+    sound.setMaxDistance(23); // Max distance at which sound is audible (further range)
+    sound.position.set(0, 0, 0); // Ensure the sound source is at the center of the record player
 });
 
 // === LIGHTING ===
