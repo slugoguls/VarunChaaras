@@ -96,13 +96,18 @@ export async function loadAllObjects(scene, colliders) {
   });
 
   await addObject({ path: "Models/record_table.glb", position: new THREE.Vector3(-5.8, -10, -8.5), scale: new THREE.Vector3(0.1, 0.1, 0.1) });
+  await addObject({ path: "Models/research_table.glb", position: new THREE.Vector3(-2.75, -10, -9.25), scale: new THREE.Vector3(1.5,1.5, 1.5),  rotation: new THREE.Euler(0, -Math.PI/2, 0) });
   await addObject({ path: "Models/record_player.glb", position: new THREE.Vector3(-7.25, -9, -8.5), scale: new THREE.Vector3(3.5, 3.5, 3.5) });
   await addObject({ path: "Models/side_table.glb", position: new THREE.Vector3(-7.25, -10, -8.5), scale: new THREE.Vector3(1.5, 3, 1.5) });
 
   await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(-9.8, -6, -6.5), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, 0, -Math.PI/6) });
+  await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(7.5, -4.5, -9.75), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, Math.PI/2, Math.PI/4) });
+
   await addObject({ path: "Models/Tape.glb", position: new THREE.Vector3(1.6, -8.55, -5.5), scale: new THREE.Vector3(0.2, 0.2, 0.2) });
   await addObject({ path: "Models/beanbag.glb", position: new THREE.Vector3(5, -10, 2.5), scale: new THREE.Vector3(5, 5, 5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
   await addObject({ path: "Models/bedc.glb", position: new THREE.Vector3(-9, -10, -6.75), scale: new THREE.Vector3(1, 1, 1.5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
   await addObject({ path: "Models/chest.glb", position: new THREE.Vector3(-9, -9.35, -3), scale: new THREE.Vector3(0.0075, 0.0075, 0.0075), rotation: new THREE.Euler(0, -Math.PI/2, 0)  });
   await addObject({ path: "Models/redstoneLamp.glb", position: new THREE.Vector3(9.25, -10, -9), scale: new THREE.Vector3(0.025, 0.025, 0.025), rotation: new THREE.Euler(0, -Math.PI/2, 0)  });
+  await addObject({ path: "Models/side_table.glb", position: new THREE.Vector3(5.5, -9.75, 0.25), scale: new THREE.Vector3(1, 2, 1)  });
+  await addObject({ path: "Models/tableLamp.glb", position: new THREE.Vector3(5, -9.25, -0.2), scale: new THREE.Vector3(1, 1, 1)  });
 }

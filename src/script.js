@@ -35,6 +35,20 @@ pointLight.rotateY = Math.PI
 pointLight.castShadow = true;
 scene.add(pointLight);
 
+const pointLight2 = new THREE.PointLight(0xFFD966, 50);
+pointLight2.position.set(7.5, -4.5, -7);
+pointLight2.distance = 10
+pointLight2.castShadow = true;
+scene.add(pointLight2);
+
+const pointLight3 = new THREE.PointLight(0xFFFFFF, 25);
+pointLight3.position.set(5.75, -7, 0);
+pointLight3.distance = 5
+pointLight3.castShadow = true;
+scene.add(pointLight3);
+
+
+
 
 // === ROOM ===
 const room = createRoom(roomSize, 0xF5F5DC, true);
