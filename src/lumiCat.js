@@ -18,8 +18,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     transparent: true,
     alphaTest: 0.5,
     side: THREE.DoubleSide,
-    emissive: new THREE.Color(0xffffff),
-    emissiveIntensity: 0.2,
+    emissive: new THREE.Color(0xffff0),
+    emissiveIntensity: 0,
     emissiveMap: texture
   });
 
@@ -67,8 +67,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
       currentFrame = states[newState].start;
       frameTimer = 0;
 
-      material.emissiveIntensity = newState === "sleep" ? 0.3 : 0.5;
-      material.emissiveIntensity = newState === "attack" ? 1.1 : 0.5;
+      material.emissiveIntensity = newState === "sleep" ? 0.2 : 0;
+      material.emissiveIntensity = newState === "attack" ? 1.1 : 0.2;
 
       if (newState === "attack") attackCount++;
     }

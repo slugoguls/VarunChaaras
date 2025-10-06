@@ -14,6 +14,7 @@ export class Player {
     this.sprite = createSprite(this.spriteSheet);
     this.sprite.position.y = -8.5; // above the floor
     this.sprite.scale.set(2, 2);
+  
 
     // Add collision box
     const box = new THREE.Box3();
