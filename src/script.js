@@ -24,7 +24,20 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 // === CAMERA ===
 const camera = createCamera();
+const listener = new THREE.AudioListener();
+camera.add(listener);
 scene.add(camera);
+
+// === AUDIO ===
+const sound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
+let isPlaying = false;
+
+audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {
+    sound.setBuffer(buffer);
+    sound.setLoop(true);
+    sound.setVolume(0.5);
+});
 
 // === LIGHTING ===
 scene.add(new THREE.AmbientLight(0xFFE5B4, 0.05));
@@ -63,6 +76,7 @@ await loadAllObjects(scene, colliders);
 
 const ui = createUIElements(scene);
 const recordPlayer = allObjects["Models/record_player.glb"];
+recordPlayer.add(sound);
 
 
 
@@ -128,8 +142,19 @@ function toggleFullscreen() {
   }
 }
 
+let canInteractWithRecordPlayer = false;
+
 window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "f") toggleFullscreen();
+  if (e.key.toLowerCase() === "e" && canInteractWithRecordPlayer) {
+    if (isPlaying) {
+      sound.pause();
+      isPlaying = false;
+    } else {
+      sound.play();
+      isPlaying = true;
+    }
+  }
 });
 
 // === COLLISION CHECK (DEBUG) ===
@@ -176,8 +201,10 @@ function renderLoop() {
       ui.eKeySprite.visible = true;
       ui.eKeySprite.position.set(recordPlayer.position.x, recordPlayer.position.y + 1.5, recordPlayer.position.z);
       ui.updateAnimation(delta);
+      canInteractWithRecordPlayer = true;
     } else {
       ui.eKeySprite.visible = false;
+      canInteractWithRecordPlayer = false;
     }
   }
 
