@@ -36,14 +36,30 @@ let isPlaying = false;
 audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {
     sound.setBuffer(buffer);
     sound.setLoop(true);
-    sound.setVolume(2); // Adjust initial volume, spatialization will handle distance
+    sound.setVolume(0.8); // Adjust initial volume, spatialization will handle distance
 
     // Configure spatial audio
     sound.setDistanceModel('linear'); // More predictable falloff
     sound.setRolloffFactor(1); // How quickly the volume falls off
     sound.setRefDistance(5); // Distance at which volume is 100% (closer to the object)
-    sound.setMaxDistance(23); // Max distance at which sound is audible (further range)
+    sound.setMaxDistance(25); // Max distance at which sound is audible (further range)
     sound.position.set(0, 0, 0); // Ensure the sound source is at the center of the record player
+
+    // Create BiquadFilterNodes for the lo-fi radio effect
+    const lowpassFilter = listener.context.createBiquadFilter();
+    lowpassFilter.type = 'lowpass';
+    lowpassFilter.frequency.value = 1500; // Slightly higher cutoff for more range
+    lowpassFilter.Q.value = 1; // Resonance
+
+    const highpassFilter = listener.context.createBiquadFilter();
+    highpassFilter.type = 'highpass';
+    highpassFilter.frequency.value = 1000; // Increased cutoff for a thinner, more radio-like sound
+    highpassFilter.Q.value = 1;
+
+    // Connect the sound to the lowpass filter, then to the highpass filter
+    sound.setFilter(lowpassFilter);
+    lowpassFilter.connect(highpassFilter);
+    // highpassFilter.connect(sound.gain); // REMOVED: PositionalAudio handles this internally after setFilter
 });
 
 // === LIGHTING ===
