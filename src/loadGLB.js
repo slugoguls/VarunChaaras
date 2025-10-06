@@ -33,7 +33,7 @@ export async function loadGLB(path, options = {}) {
     addCollider = true,
   } = options;
 
-  console.log(`[GLB Loader] Starting to load: ${path}`);
+  // console.log(`[GLB Loader] Starting to load: ${path}`); // Commented out for cleaner console
 
   return new Promise((resolve, reject) => {
     gltfLoader.load(
@@ -74,18 +74,18 @@ export async function loadGLB(path, options = {}) {
             helper.visible = true; // toggle to false if you don't want to see the box
             model.add(helper);
           } else {
-            console.warn(`[GLB Loader] No mesh named "Collider" found. Using full model bounding box instead.`);
+            // console.warn(`[GLB Loader] No mesh named \"Collider\" found. Using full model bounding box instead.`); // Commented out for cleaner console
             collider = new THREE.Box3().setFromObject(model);
           }
         }
 
-        console.log(`[GLB Loader] Model loaded successfully:`, model);
+        // console.log(`[GLB Loader] Model loaded successfully:`, model);
         resolve({ model, collider });
       },
       (xhr) => {
         if (xhr.total) {
           const percent = ((xhr.loaded / xhr.total) * 100).toFixed(2);
-          console.log(`[GLB Loader] ${path} ${percent}% loaded`);
+          // console.log(`[GLB Loader] ${path} ${percent}% loaded`); // Commented out for cleaner console
         }
       },
       (error) => {
