@@ -75,11 +75,5 @@ assets/
 └── ...
 ```
 
-## License
 
-MIT
-
----
-
-Built by [@slugoguls](https://github.com/slugoguls)
 
