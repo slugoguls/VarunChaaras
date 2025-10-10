@@ -7,7 +7,12 @@ body {
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
+    background-color: #000000;
   }
+
+canvas.threejs {
+    background-color: #000000;
+}
 
 .modal {
     display: none; 
