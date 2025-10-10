@@ -249,6 +249,26 @@ export class MenuScreen {
     return this.menuActive;
   }
   
+  handleResize() {
+    // Update camera aspect ratio
+    const aspect = window.innerWidth / window.innerHeight;
+    this.camera.left = -aspect;
+    this.camera.right = aspect;
+    this.camera.updateProjectionMatrix();
+    
+    // Rescale background to fit new screen size
+    const screenAspect = window.innerWidth / window.innerHeight;
+    const spriteAspect = 320 / 180;
+    
+    if (screenAspect > spriteAspect) {
+      // Screen is wider - fit to width
+      this.bgSprite.scale.set(screenAspect * 2, 2, 1);
+    } else {
+      // Screen is taller - fit to height
+      this.bgSprite.scale.set(2 * spriteAspect, 2, 1);
+    }
+  }
+  
   dispose() {
     this.scene.traverse((object) => {
       if (object.material) {

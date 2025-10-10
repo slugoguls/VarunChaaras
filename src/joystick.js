@@ -11,6 +11,7 @@ export class Joystick {
     this.startX = 0;
     this.startY = 0;
     this.maxDistance = 60; // Maximum distance the stick can move from center
+    this.enabled = false; // Start disabled
     
     // Check if device has touch support
     this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -35,7 +36,7 @@ export class Joystick {
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.15);
       border: 4px solid rgba(255, 255, 255, 0.4);
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       touch-action: none;
@@ -62,20 +63,30 @@ export class Joystick {
   }
 
   setupEventListeners() {
-    // Touch start
-    this.container.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this.active = true;
+    // Touch start anywhere on screen
+    document.addEventListener('touchstart', (e) => {
+      if (!this.enabled) return; // Don't show if not enabled (during menu)
+      
+      // Ignore if touching the canvas (for interactions)
+      if (e.target.id === 'joystick-container' || e.target.id === 'joystick-stick') return;
+      
       const touch = e.touches[0];
-      const rect = this.container.getBoundingClientRect();
-      this.startX = rect.left + rect.width / 2;
-      this.startY = rect.top + rect.height / 2;
+      
+      // Position joystick where user touches
+      this.container.style.left = `${touch.clientX}px`;
+      this.container.style.top = `${touch.clientY}px`;
+      this.container.style.transform = 'translate(-50%, -50%)';
+      this.container.style.display = 'flex';
+      
+      this.active = true;
+      this.startX = touch.clientX;
+      this.startY = touch.clientY;
     });
 
     // Touch move
-    this.container.addEventListener('touchmove', (e) => {
-      e.preventDefault();
+    document.addEventListener('touchmove', (e) => {
       if (!this.active) return;
+      e.preventDefault();
       
       const touch = e.touches[0];
       let deltaX = touch.clientX - this.startX;
@@ -97,7 +108,7 @@ export class Joystick {
       // Normalize joystick values (-1 to 1)
       this.joystickX = deltaX / this.maxDistance;
       this.joystickY = deltaY / this.maxDistance;
-    });
+    }, { passive: false });
 
     // Touch end
     const touchEnd = () => {
@@ -105,12 +116,11 @@ export class Joystick {
       this.joystickX = 0;
       this.joystickY = 0;
       this.stick.style.transform = 'translate(0px, 0px)';
+      this.container.style.display = 'none'; // Hide when released
     };
 
-    this.container.addEventListener('touchend', touchEnd);
-    this.container.addEventListener('touchcancel', touchEnd);
-
-    // Joystick is now always visible on touch devices (no need to wait for first touch)
+    document.addEventListener('touchend', touchEnd);
+    document.addEventListener('touchcancel', touchEnd);
   }
 
   getInput() {
@@ -123,5 +133,17 @@ export class Joystick {
 
   isEnabled() {
     return this.isTouchDevice;
+  }
+  
+  show() {
+    if (this.container) {
+      this.container.style.display = 'flex';
+    }
+  }
+  
+  hide() {
+    if (this.container) {
+      this.container.style.display = 'none';
+    }
   }
 }

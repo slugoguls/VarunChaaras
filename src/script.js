@@ -32,8 +32,14 @@ renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 
 // === MENU SCREEN ===
 let gameStarted = false;
+let joystick; // Declare here
+
 const menu = new MenuScreen(() => {
   gameStarted = true;
+  // Enable joystick when game starts (it will show on touch)
+  if (joystick) {
+    joystick.enabled = true;
+  }
 });
 
 // === CAMERA ===
@@ -173,7 +179,7 @@ window.addEventListener("click", (event) => {
 });
 
 // === JOYSTICK (Mobile Only) ===
-const joystick = new Joystick();
+joystick = new Joystick(); // Assign to existing variable
 
 // === PLAYER ===
 const player = new Player(boundary, 0.8, 3, joystick);
@@ -435,7 +441,15 @@ renderLoop();
 
 // === HANDLE RESIZE ===
 window.addEventListener("resize", () => {
+  // Update renderer size
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  
+  // Update game camera
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  
+  // Update menu (if active)
+  if (menu) {
+    menu.handleResize();
+  }
 });
