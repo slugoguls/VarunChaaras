@@ -2,7 +2,7 @@
 
 A unique, immersive 3D portfolio experience built with Three.js that lets visitors explore my work in a virtual environment. Navigate through a cozy room filled with interactive elements, pixel art aesthetics, and spatial audio - all running smoothly on both desktop and mobile devices.
 
-[![Live Demo](https://img.shields.io/badge/🌐-Live%20Demo-blue)](https://varun-chaaras.vercel.app)
+[![Live Demo](https://img.shields.io/badge/🌐-Live%20Demo-blue)](https://varunchaaras.art)
 
 ## ✨ Features
 
