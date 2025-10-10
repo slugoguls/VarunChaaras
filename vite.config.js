@@ -1,7 +1,7 @@
 export default {
     root: 'src/',
     publicDir: '../assets/',
-    base: './',
+    base: '/',
     build: {
         target: 'esnext', // Support top-level await
         outDir: '../dist',
