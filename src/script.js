@@ -6,6 +6,7 @@ import { loadAllObjects, allObjects } from "./objectLoader.js";
 import { loadAllPaintings } from "./paintingLoader.js";
 import { createLumiCat } from "./lumiCat.js";
 import { createUIElements } from "./uiElements.js";
+import { Joystick } from "./joystick.js";
 
 let lumi;
 const colliders = [];
@@ -18,9 +19,15 @@ const scene = new THREE.Scene();
 
 // === RENDERER ===
 const canvas = document.querySelector("canvas.threejs");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+  canvas, 
+  antialias: window.devicePixelRatio <= 1, // Disable antialiasing on high DPI displays for performance
+  powerPreference: "high-performance" // Use high-performance GPU
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Better pixel ratio handling for mobile
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 
 // === CAMERA ===
 const camera = createCamera();
@@ -139,8 +146,11 @@ window.addEventListener("click", (event) => {
   }
 });
 
+// === JOYSTICK (Mobile Only) ===
+const joystick = new Joystick();
+
 // === PLAYER ===
-const player = new Player(boundary, 0.8, 3);
+const player = new Player(boundary, 0.8, 3, joystick);
 scene.add(player.sprite);
 const collisionBox = player.getCollisionBox();
 scene.add(collisionBox);
@@ -232,7 +242,7 @@ function renderLoop() {
   }
 
   // Update player
-  player.update(colliders);
+  player.update(delta, colliders);
   updateCamera();
 
   // Update Lumi (idle/sleep/walk states)

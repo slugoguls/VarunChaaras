@@ -2,8 +2,10 @@ import * as THREE from "three";
 import { createSprite, setFrame, loadSpriteSheet } from "./spriteLoader.js";
 
 export class Player {
-  constructor(boundary, width = 1, height = 1) {
+  constructor(boundary, width = 1, height = 1, joystick = null) {
     this.boundary = boundary;
+    this.joystick = joystick;
+    
     // Movement keys
     this.keys = { w: false, a: false, s: false, d: false };
 
@@ -28,7 +30,7 @@ export class Player {
     // Animation state
     this.currentFrame = 0;
     this.frameCounter = 0;
-    this.frameDelay = 40;
+    this.frameDelay = 0.2; 
 
     // Frame mappings for directions
     this.animations = {
@@ -61,14 +63,37 @@ export class Player {
     if (this.keys.hasOwnProperty(key)) this.keys[key] = false;
   }
 
-  move(speed = 0.03, colliders = []) {
+  move(delta = 0.016, colliders = []) {
     let newX = this.sprite.position.x;
     let newZ = this.sprite.position.z;
+    let isMoving = false;
+    
+    // Base speed in units per second (not per frame)
+    const speed = 5; // Faster movement (was 2.5)
 
-    if (this.keys.w) { newZ -= speed; this.lastDirection = "Back"; }
-    if (this.keys.s) { newZ += speed; this.lastDirection = "Front"; }
-    if (this.keys.a) { newX -= speed; this.lastDirection = "Left"; }
-    if (this.keys.d) { newX += speed; this.lastDirection = "Right"; }
+    // Keyboard input
+    if (this.keys.w) { newZ -= speed * delta; this.lastDirection = "Back"; isMoving = true; }
+    if (this.keys.s) { newZ += speed * delta; this.lastDirection = "Front"; isMoving = true; }
+    if (this.keys.a) { newX -= speed * delta; this.lastDirection = "Left"; isMoving = true; }
+    if (this.keys.d) { newX += speed * delta; this.lastDirection = "Right"; isMoving = true; }
+
+    // Joystick input (mobile)
+    if (this.joystick && this.joystick.isEnabled()) {
+      const input = this.joystick.getInput();
+      
+      if (Math.abs(input.x) > 0.1 || Math.abs(input.y) > 0.1) {
+        newX += input.x * speed * delta;
+        newZ += input.y * speed * delta;
+        isMoving = true;
+
+        // Set direction based on joystick
+        if (Math.abs(input.x) > Math.abs(input.y)) {
+          this.lastDirection = input.x > 0 ? "Right" : "Left";
+        } else {
+          this.lastDirection = input.y > 0 ? "Front" : "Back";
+        }
+      }
+    }
 
     // Create a proposed bounding box for the new position
     const proposedBox = this.collisionBox.box.clone();
@@ -97,16 +122,35 @@ export class Player {
   }
 
   setAnimation() {
+    let isMoving = false;
+
+    // Check keyboard movement
+    if (this.keys.w || this.keys.s || this.keys.a || this.keys.d) {
+      isMoving = true;
+    }
+
+    // Check joystick movement
+    if (this.joystick && this.joystick.isEnabled()) {
+      const input = this.joystick.getInput();
+      if (Math.abs(input.x) > 0.1 || Math.abs(input.y) > 0.1) {
+        isMoving = true;
+      }
+    }
+
     // Walking
-    if (this.keys.w) this.currentAnim = this.animations.walkBack;
-    else if (this.keys.s) this.currentAnim = this.animations.walkFront;
-    else if (this.keys.a) this.currentAnim = this.animations.walkLeft;
-    else if (this.keys.d) this.currentAnim = this.animations.walkRight;
+    if (isMoving) {
+      if (this.lastDirection === "Back") this.currentAnim = this.animations.walkBack;
+      else if (this.lastDirection === "Front") this.currentAnim = this.animations.walkFront;
+      else if (this.lastDirection === "Left") this.currentAnim = this.animations.walkLeft;
+      else if (this.lastDirection === "Right") this.currentAnim = this.animations.walkRight;
+    }
     // Idle
-    else this.currentAnim = this.animations[`idle${this.lastDirection}`];
+    else {
+      this.currentAnim = this.animations[`idle${this.lastDirection}`];
+    }
   }
 
-  animate() {
+  animate(delta = 0.016) {
     this.setAnimation();
 
     if (this.currentAnim.length === 1) {
@@ -115,8 +159,8 @@ export class Player {
       this.currentFrame = 0;
       this.frameCounter = 0;
     } else {
-      // walking or multi-frame idle
-      this.frameCounter++;
+      // walking or multi-frame idle - use delta time
+      this.frameCounter += delta;
       if (this.frameCounter >= this.frameDelay) {
         this.currentFrame++;
         if (this.currentFrame >= this.currentAnim.length) this.currentFrame = 0;
@@ -126,9 +170,9 @@ export class Player {
     }
   }
 
-  update(colliders = []) {
-    this.move(0.03, colliders);
-    this.animate();
+  update(delta = 0.016, colliders = []) {
+    this.move(delta, colliders);
+    this.animate(delta);
     this.collisionBox.box.setFromCenterAndSize(
       this.sprite.position,
       new THREE.Vector3(this.collisionBox.box.getSize(new THREE.Vector3()).x, this.collisionBox.box.getSize(new THREE.Vector3()).y, 1)

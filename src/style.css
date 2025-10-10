@@ -1,6 +1,12 @@
 body {
     margin: 0;
     overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
 .modal {
@@ -41,4 +47,22 @@ body {
     color: #bbb;
     text-decoration: none;
     cursor: pointer;
+}
+
+/* Mobile Joystick Styles */
+#joystick-container {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#joystick-stick {
+    pointer-events: none;
+}
+
+/* Hide joystick on larger screens (desktop) */
+@media (min-width: 768px) {
+    #joystick-container {
+        display: none !important;
+    }
 }

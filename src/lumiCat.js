@@ -6,8 +6,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   const spritePath = "Char/LumiCat-Sheet.png";
   const framesHoriz = 6;
   const framesVert = 5;
-  const frameDuration = 0.12;
-  const speed = 0.01;
+  const frameDuration = 0.15; // Time in seconds per frame (was 0.12)
+  const speed = 1.0; // Units per second (was 0.01 per frame)
 
   // Load texture
   const texture = loadSpriteSheet(spritePath, framesHoriz, framesVert);
@@ -132,9 +132,9 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     if (currentState === "walk") {
       let nextPos;
       if (walkAxis === 'x') {
-        nextPos = new THREE.Vector3(cat.position.x + speed * direction, cat.position.y, cat.position.z);
+        nextPos = new THREE.Vector3(cat.position.x + speed * direction * delta, cat.position.y, cat.position.z);
       } else { // walkAxis === 'z'
-        nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z + speed * direction);
+        nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z + speed * direction * delta);
       }
       const collisionType = detectCollision(nextPos, playerSprite);
 
