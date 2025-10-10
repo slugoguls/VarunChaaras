@@ -108,6 +108,25 @@ const ui = createUIElements(scene);
 const recordPlayer = allObjects["Models/record_player.glb"];
 recordPlayer.add(sound);
 
+const researchTable = allObjects["Models/research_table.glb"];
+const table2 = allObjects["Models/table2.glb"];
+
+console.log("Record Player:", recordPlayer ? "✅ Loaded" : "❌ Not found");
+console.log("Research Table:", researchTable ? "✅ Loaded" : "❌ Not found");
+console.log("Table2:", table2 ? "✅ Loaded" : "❌ Not found");
+
+if (recordPlayer) {
+  console.log("Record Player Position:", 
+    `x: ${recordPlayer.position.x}, y: ${recordPlayer.position.y}, z: ${recordPlayer.position.z}`);
+}
+if (researchTable) {
+  console.log("Research Table Position:", 
+    `x: ${researchTable.position.x}, y: ${researchTable.position.y}, z: ${researchTable.position.z}`);
+}
+if (table2) {
+  console.log("Table2 Position:", 
+    `x: ${table2.position.x}, y: ${table2.position.y}, z: ${table2.position.z}`);
+}
 
 
 // === PAINTINGS ===
@@ -176,9 +195,13 @@ function toggleFullscreen() {
 }
 
 let canInteractWithRecordPlayer = false;
+let canInteractWithResearchTable = false;
+let canInteractWithTable2 = false;
 
 window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "f") toggleFullscreen();
+  
+  // Record player interaction
   if (e.key.toLowerCase() === "e" && canInteractWithRecordPlayer) {
     if (isPlaying) {
       sound.pause();
@@ -187,6 +210,16 @@ window.addEventListener("keydown", (e) => {
       sound.play();
       isPlaying = true;
     }
+  }
+  
+  // Research table interaction - Open Resume
+  if (e.key.toLowerCase() === "e" && canInteractWithResearchTable) {
+    window.open("https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QZyggBLgph6/view?usp=sharing", "_blank");
+  }
+  
+  // Table2 interaction - Open GitHub
+  if (e.key.toLowerCase() === "e" && canInteractWithTable2) {
+    window.open("https://github.com/slugoguls", "_blank");
   }
 });
 
@@ -203,6 +236,37 @@ function checkCollisions(playerObject) {
 
 // === LUMI CAT ===
 lumi = await createLumiCat(scene, colliders, boundary);
+
+// === DEBUG INTERACTION AREAS ===
+const debugInteractions = true; // Set to false to hide debug spheres
+
+console.log("Player Y position:", player.sprite.position.y);
+
+if (debugInteractions) {
+  // Record player debug sphere - at player's Y level for visibility
+  const recordPlayerSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(2, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.3 })
+  );
+  recordPlayerSphere.position.set(recordPlayer.position.x, player.sprite.position.y, recordPlayer.position.z);
+  scene.add(recordPlayerSphere);
+
+  // Research table debug sphere - at player's Y level
+  const researchTableSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(2.5, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.3 })
+  );
+  researchTableSphere.position.set(researchTable.position.x, player.sprite.position.y, researchTable.position.z);
+  scene.add(researchTableSphere);
+
+  // Table2 debug sphere - at player's Y level
+  const table2Sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(2.5, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true, transparent: true, opacity: 0.3 })
+  );
+  table2Sphere.position.set(table2.position.x, player.sprite.position.y, table2.position.z);
+  scene.add(table2Sphere);
+}
 
 // === RENDER LOOP ===
 const clock = new THREE.Clock();
@@ -227,18 +291,87 @@ function renderLoop() {
     }
   });
 
-  // Record player interaction
+  // Check all interactive objects and show E button for the closest one
+  canInteractWithRecordPlayer = false;
+  canInteractWithResearchTable = false;
+  canInteractWithTable2 = false;
+  
+  let closestInteraction = null;
+  let closestDistance = Infinity;
+  
+  // Check record player
   if (recordPlayer) {
-    const distance = player.sprite.position.distanceTo(recordPlayer.position);
-    if (distance < 2) {
-      ui.eKeySprite.visible = true;
-      ui.eKeySprite.position.set(recordPlayer.position.x, recordPlayer.position.y + 1.5, recordPlayer.position.z);
-      ui.updateAnimation(delta);
-      canInteractWithRecordPlayer = true;
-    } else {
-      ui.eKeySprite.visible = false;
-      canInteractWithRecordPlayer = false;
+    const dx = player.sprite.position.x - recordPlayer.position.x;
+    const dz = player.sprite.position.z - recordPlayer.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz); // 2D distance (ignore Y)
+    if (distance < 2 && distance < closestDistance) {
+      closestDistance = distance;
+      closestInteraction = {
+        type: 'recordPlayer',
+        position: recordPlayer.position,
+        yOffset: 2.5  // Raised from 1.5
+      };
     }
+  }
+  
+  // Check research table
+  if (researchTable) {
+    const dx = player.sprite.position.x - researchTable.position.x;
+    const dz = player.sprite.position.z - researchTable.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz); // 2D distance (ignore Y)
+    if (distance < 2.5) {
+      console.log("🟢 Near Research Table!");
+      console.log("  Player pos:", player.sprite.position.x.toFixed(2), player.sprite.position.y.toFixed(2), player.sprite.position.z.toFixed(2));
+      console.log("  Table pos:", researchTable.position.x.toFixed(2), researchTable.position.y.toFixed(2), researchTable.position.z.toFixed(2));
+      console.log("  Distance (2D):", distance.toFixed(2), "Closest so far:", closestDistance.toFixed(2));
+    }
+    if (distance < 2.5 && distance < closestDistance) {
+      closestDistance = distance;
+      closestInteraction = {
+        type: 'researchTable',
+        position: researchTable.position,
+        yOffset: 2.5  // Raised from 1.5
+      };
+    }
+  }
+  
+  // Check table2
+  if (table2) {
+    const dx = player.sprite.position.x - table2.position.x;
+    const dz = player.sprite.position.z - table2.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz); // 2D distance (ignore Y)
+    if (distance < 2.5) {
+      console.log("🔵 Near Table2!");
+      console.log("  Player pos:", player.sprite.position.x.toFixed(2), player.sprite.position.y.toFixed(2), player.sprite.position.z.toFixed(2));
+      console.log("  Table pos:", table2.position.x.toFixed(2), table2.position.y.toFixed(2), table2.position.z.toFixed(2));
+      console.log("  Distance (2D):", distance.toFixed(2), "Closest so far:", closestDistance.toFixed(2));
+    }
+    if (distance < 2.5 && distance < closestDistance) {
+      closestDistance = distance;
+      closestInteraction = {
+        type: 'table2',
+        position: table2.position,
+        yOffset: 3  // Raised from 2
+      };
+    }
+  }
+  
+  // Show E button for closest interaction
+  if (closestInteraction) {
+    ui.eKeySprite.visible = true;
+    ui.eKeySprite.position.set(
+      closestInteraction.position.x, 
+      closestInteraction.position.y + closestInteraction.yOffset, 
+      closestInteraction.position.z
+    );
+    ui.updateAnimation(delta);
+    
+    // Set the appropriate flag
+    if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
+    else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
+    else if (closestInteraction.type === 'table2') canInteractWithTable2 = true;
+  } else {
+    ui.eKeySprite.visible = false;
   }
 
   // Update player
