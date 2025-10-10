@@ -2,7 +2,7 @@
 
 3D portfolio site built with Three.js. Walk around, check out some projects, listen to music.
 
-[Live Site](https://varun-chaaras.vercel.app)
+[Live Site](https://varunchaaras.art)
 
 ## What's This
 
