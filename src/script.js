@@ -40,6 +40,10 @@ const menu = new MenuScreen(() => {
   if (joystick) {
     joystick.enabled = true;
   }
+  // Resume audio context on user interaction (required for mobile browsers)
+  if (listener.context.state === 'suspended') {
+    listener.context.resume();
+  }
 });
 
 // === CAMERA ===
