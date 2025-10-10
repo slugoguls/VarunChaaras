@@ -48,6 +48,12 @@ const menu = new MenuScreen(() => {
   }
 });
 
+// Hide loading screen once menu is ready
+const loadingScreen = document.getElementById('loading-screen');
+if (loadingScreen) {
+  loadingScreen.style.display = 'none';
+}
+
 // === AUDIO ===
 const sound = new THREE.PositionalAudio(listener);
 const audioLoader = new THREE.AudioLoader();
