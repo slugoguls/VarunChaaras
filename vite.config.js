@@ -4,7 +4,8 @@ export default {
     base: './',
     build: {
         target: 'esnext', // Support top-level await
-        outDir: '../dist'
+        outDir: '../dist',
+        emptyOutDir: true
     },
     server: {
         host: true, // Expose to network
