@@ -198,6 +198,7 @@ let canInteractWithRecordPlayer = false;
 let canInteractWithResearchTable = false;
 let canInteractWithTable2 = false;
 
+// Handle interactions (keyboard for desktop)
 window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "f") toggleFullscreen();
   
@@ -223,6 +224,33 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+// Handle tap interactions (mobile)
+window.addEventListener("touchend", (e) => {
+  // Only trigger if tapping on the 3D canvas (not UI elements like joystick)
+  if (e.target.classList.contains('threejs')) {
+    // Record player interaction
+    if (canInteractWithRecordPlayer) {
+      if (isPlaying) {
+        sound.pause();
+        isPlaying = false;
+      } else {
+        sound.play();
+        isPlaying = true;
+      }
+    }
+    
+    // Research table interaction - Open Resume
+    if (canInteractWithResearchTable) {
+      window.open("https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QZyggBLgph6/view?usp=sharing", "_blank");
+    }
+    
+    // Table2 interaction - Open GitHub
+    if (canInteractWithTable2) {
+      window.open("https://github.com/slugoguls", "_blank");
+    }
+  }
+});
+
 // === COLLISION CHECK (DEBUG) ===
 function checkCollisions(playerObject) {
   const playerBox = new THREE.Box3().setFromObject(playerObject);
@@ -238,7 +266,7 @@ function checkCollisions(playerObject) {
 lumi = await createLumiCat(scene, colliders, boundary);
 
 // === DEBUG INTERACTION AREAS ===
-const debugInteractions = true; // Set to false to hide debug spheres
+const debugInteractions = false; // Set to true to show debug spheres
 
 console.log("Player Y position:", player.sprite.position.y);
 
