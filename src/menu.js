@@ -11,6 +11,28 @@ export class MenuScreen {
     this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
     this.camera.position.z = 1;
 
+    // Message images
+    const loader = new THREE.TextureLoader();
+    this.msgTextures = {
+      nothing: loader.load('Menu/nothing.png'),
+      start: loader.load('Menu/starthovermsg.png'),
+      resume: loader.load('Menu/resumemsg.png'),
+      settings: loader.load('Menu/settings.png'),
+    };
+    Object.values(this.msgTextures).forEach(tex => {
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
+      tex.colorSpace = THREE.SRGBColorSpace;
+    });
+    this.msgSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: this.msgTextures.nothing,
+      transparent: true,
+      toneMapped: false
+    }));
+    this.msgSprite.renderOrder = 20;
+    this.scene.add(this.msgSprite);
+    this.updateMsgSpritePosition();
+
     this.menuActive = true;
     this.currentFrame = 0;
     this.frameTimer = 0;
@@ -254,7 +276,8 @@ export class MenuScreen {
       button.material.map = button.userData.normalTexture;
     });
 
-    // Set hover texture for intersected button
+    // Set hover texture for intersected button and show message image
+    let msgType = 'nothing';
     if (intersects.length > 0) {
       const button = intersects[0].object;
       if (button.userData.type === 'mute') {
@@ -262,10 +285,16 @@ export class MenuScreen {
       } else {
         button.material.map = button.userData.hoverTexture;
         document.body.style.cursor = 'pointer';
+        if (button.userData.type === 'start') msgType = 'start';
+        if (button.userData.type === 'resume') msgType = 'resume';
+        if (button.userData.type === 'settings') msgType = 'settings';
       }
     } else {
       document.body.style.cursor = 'default';
     }
+    this.msgSprite.material.map = this.msgTextures[msgType];
+    this.msgSprite.material.needsUpdate = true;
+    this.updateMsgSpritePosition();
   }
 
   handleClick() {
@@ -321,6 +350,9 @@ export class MenuScreen {
   }
 
   handleResize() {
+  // Reposition message sprite for bottom middle, optimise for phone
+  this.updateMsgSpritePosition();
+
     // Update camera aspect ratio
     const aspect = window.innerWidth / window.innerHeight;
     this.camera.left = -aspect;
@@ -344,6 +376,20 @@ export class MenuScreen {
       this.muteButton.position.set(this.camera.right - 0.15, this.camera.top - 0.15, 1.0);
       this.muteButton.renderOrder = 10;
     }
+  }
+
+  updateMsgSpritePosition() {
+    // Bottom middle, scale for phone/desktop
+    const aspect = window.innerWidth / window.innerHeight;
+  let scaleX = 1.05;
+  let scaleY = 0.22;
+    if (window.innerWidth < 700) { // phone
+      scaleX = 1.35;
+      scaleY = 0.28;
+    }
+    this.msgSprite.scale.set(scaleX, scaleY, 1);
+  // Move further down for better visibility
+  this.msgSprite.position.set(0, -0.82, 0.5);
   }
 
   dispose() {
