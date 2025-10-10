@@ -5,21 +5,79 @@ export class MenuScreen {
     this.onStart = onStart;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000); // Black background
-    
+
     // Use screen aspect ratio for camera
     const aspect = window.innerWidth / window.innerHeight;
     this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
     this.camera.position.z = 1;
-    
+
     this.menuActive = true;
     this.currentFrame = 0;
     this.frameTimer = 0;
     this.frameDuration = 0.1; // 10 frames animation
     this.totalFrames = 10;
-    
+
+    // Menu music setup
+    this.menuAudio = new Audio('sounds/outerwilds.mp3');
+    this.menuAudio.loop = true;
+    this.menuAudio.volume = 0.2;
+    this.menuAudio.muted = false;
+    this.menuAudioStarted = false;
+
+    // Mute button setup
+    this.muteFrame = 0; // 0 = unmuted, 1 = muted
     this.createBackground();
     this.createButtons();
+    this.createMuteButton();
     this.setupEventListeners();
+  // Do not auto-play music; wait for user gesture
+  this.musicReady = false;
+  }
+  createMuteButton() {
+    const textureLoader = new THREE.TextureLoader();
+  this.muteTexture = textureLoader.load('Menu/MenuMute.png', () => {
+      // Force update after texture loads
+      this.setMuteFrame(this.muteFrame);
+    });
+    this.muteTexture.minFilter = THREE.NearestFilter;
+    this.muteTexture.magFilter = THREE.NearestFilter;
+    this.muteTexture.colorSpace = THREE.SRGBColorSpace;
+    // Sprite sheet: 2 frames vertical (16x32)
+    const material = new THREE.SpriteMaterial({
+      map: this.muteTexture,
+      transparent: true,
+      toneMapped: false
+    });
+    this.muteButton = new THREE.Sprite(material);
+  this.muteButton.scale.set(0.09, 0.09, 1); // Show only one 16x16 frame from 32x16 sheet
+    // Position top right (relative to orthographic camera)
+    this.muteButton.position.set(this.camera.right - 0.15, this.camera.top - 0.15, 1.0);
+    this.muteButton.renderOrder = 10;
+    this.muteButton.userData = { type: 'mute' };
+    this.setMuteFrame(0);
+    this.scene.add(this.muteButton);
+  }
+
+  setMuteFrame(frame) {
+  // 2 frames horizontal
+  this.muteFrame = frame;
+  this.muteTexture.offset.set(frame / 2, 0);
+  this.muteTexture.repeat.set(1 / 2, 1);
+  }
+
+  playMenuMusic() {
+    if (!this.menuAudioStarted) {
+      this.menuAudio.play();
+      this.menuAudioStarted = true;
+    }
+  }
+
+  stopMenuMusic() {
+    if (this.menuAudioStarted) {
+      this.menuAudio.pause();
+      this.menuAudio.currentTime = 0;
+      this.menuAudioStarted = false;
+    }
   }
   
   createBackground() {
@@ -154,80 +212,93 @@ export class MenuScreen {
     // Mouse move for hover effect
     window.addEventListener('mousemove', (e) => {
       if (!this.menuActive) return;
-      
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      
       this.updateHover();
     });
-    
+
     // Click handler
     window.addEventListener('click', (e) => {
       if (!this.menuActive) return;
-      
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      
+      // Start music on first gesture
+      if (!this.musicReady) {
+        this.playMenuMusic();
+        this.musicReady = true;
+      }
       this.handleClick();
     });
-    
+
     // Touch handler for mobile
     window.addEventListener('touchend', (e) => {
       if (!this.menuActive) return;
-      
       const touch = e.changedTouches[0];
       this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-      
+      // Start music on first gesture
+      if (!this.musicReady) {
+        this.playMenuMusic();
+        this.musicReady = true;
+      }
       this.handleClick();
     });
   }
-  
+
   updateHover() {
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.buttons);
-    
+    const intersects = this.raycaster.intersectObjects([...this.buttons, this.muteButton]);
+
     // Reset all buttons to normal
     this.buttons.forEach(button => {
       button.material.map = button.userData.normalTexture;
     });
-    
+
     // Set hover texture for intersected button
     if (intersects.length > 0) {
       const button = intersects[0].object;
-      button.material.map = button.userData.hoverTexture;
-      document.body.style.cursor = 'pointer';
+      if (button.userData.type === 'mute') {
+        document.body.style.cursor = 'pointer';
+      } else {
+        button.material.map = button.userData.hoverTexture;
+        document.body.style.cursor = 'pointer';
+      }
     } else {
       document.body.style.cursor = 'default';
     }
   }
-  
+
   handleClick() {
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.buttons);
-    
+    const intersects = this.raycaster.intersectObjects([...this.buttons, this.muteButton]);
+
     if (intersects.length > 0) {
       const button = intersects[0].object;
       const type = button.userData.type;
-      
+
       if (type === 'start') {
         this.startGame();
       } else if (type === 'resume') {
-        window.open('https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QZyggBLgph6/view?usp=sharing', '_blank');
+        window.open('https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QwZyggBLgph6/view?usp=sharing', '_blank');
       } else if (type === 'settings') {
         alert('Settings coming soon!');
+      } else if (type === 'mute') {
+        // Toggle mute
+        this.menuAudio.muted = !this.menuAudio.muted;
+        this.setMuteFrame(this.menuAudio.muted ? 1 : 0);
       }
     }
   }
-  
+
   startGame() {
     this.menuActive = false;
     document.body.style.cursor = 'default';
+    this.stopMenuMusic();
     if (this.onStart) {
       this.onStart();
     }
   }
-  
+
   update(delta) {
     if (!this.menuActive) return;
     
@@ -239,27 +310,27 @@ export class MenuScreen {
       this.frameTimer = 0;
     }
   }
-  
+
   render(renderer) {
     if (!this.menuActive) return;
     renderer.render(this.scene, this.camera);
   }
-  
+
   isActive() {
     return this.menuActive;
   }
-  
+
   handleResize() {
     // Update camera aspect ratio
     const aspect = window.innerWidth / window.innerHeight;
     this.camera.left = -aspect;
     this.camera.right = aspect;
     this.camera.updateProjectionMatrix();
-    
+
     // Rescale background to fit new screen size
     const screenAspect = window.innerWidth / window.innerHeight;
     const spriteAspect = 320 / 180;
-    
+
     if (screenAspect > spriteAspect) {
       // Screen is wider - fit to width
       this.bgSprite.scale.set(screenAspect * 2, 2, 1);
@@ -267,8 +338,14 @@ export class MenuScreen {
       // Screen is taller - fit to height
       this.bgSprite.scale.set(2 * spriteAspect, 2, 1);
     }
+
+    // Reposition mute button
+    if (this.muteButton) {
+      this.muteButton.position.set(this.camera.right - 0.15, this.camera.top - 0.15, 1.0);
+      this.muteButton.renderOrder = 10;
+    }
   }
-  
+
   dispose() {
     this.scene.traverse((object) => {
       if (object.material) {
@@ -279,3 +356,4 @@ export class MenuScreen {
     });
   }
 }
+
