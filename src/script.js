@@ -30,6 +30,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 
+// === CAMERA ===
+const camera = createCamera();
+const listener = new THREE.AudioListener();
+camera.add(listener);
+scene.add(camera);
+
 // === MENU SCREEN ===
 let gameStarted = false;
 let joystick; // Declare here
@@ -40,17 +46,7 @@ const menu = new MenuScreen(() => {
   if (joystick) {
     joystick.enabled = true;
   }
-  // Resume audio context on user interaction (required for mobile browsers)
-  if (listener.context.state === 'suspended') {
-    listener.context.resume();
-  }
 });
-
-// === CAMERA ===
-const camera = createCamera();
-const listener = new THREE.AudioListener();
-camera.add(listener);
-scene.add(camera);
 
 // === AUDIO ===
 const sound = new THREE.PositionalAudio(listener);
