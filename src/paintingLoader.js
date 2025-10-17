@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export async function loadAllPaintings(scene, paintings) {
+export async function loadAllPaintings(scene, paintings, onProgress = null) {
   const loader = new THREE.TextureLoader();
 
   // Helper to load a texture with chosen filtering + correct aspect ratio
@@ -78,12 +78,18 @@ const paintingsData = [
 
 
   // Load all asynchronously
-  await Promise.all(
-  paintingsData.map((p) =>
-    loadPainting(p.file, p.position, p.scale, p.rotation)
-  )
-);
-
+  const results = await Promise.all(
+    paintingsData.map((p) =>
+      loadPainting(p.file, p.position, p.scale, p.rotation).then((res) => {
+        if (onProgress) onProgress(p.file, true);
+        return res;
+      }).catch((err) => {
+        if (onProgress) onProgress(p.file, false);
+        throw err;
+      })
+    )
+  );
 
   console.log("✅ All paintings loaded successfully");
+  return results;
 }
