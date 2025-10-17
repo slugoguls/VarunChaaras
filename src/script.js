@@ -5,6 +5,7 @@ import { Player } from "./player.js";
 import { loadAllObjects, allObjects } from "./objectLoader.js";
 import { loadAllPaintings } from "./paintingLoader.js";
 import { createLumiCat } from "./lumiCat.js";
+import { setFrame } from "./spriteLoader.js";
 import { createUIElements } from "./uiElements.js";
 import { Joystick } from "./joystick.js";
 import { MenuScreen } from "./menu.js";
@@ -432,6 +433,23 @@ function renderLoop() {
 
     // Update Lumi (idle/sleep/walk states)
     if (lumi && lumi.update) lumi.update(delta, player.sprite);
+
+    // Advance TV sprite-sheet animation if present
+    const tvAnim = allObjects['tvSheetAnim'];
+    if (tvAnim && tvAnim.texture) {
+      tvAnim.acc += delta;
+      const interval = 1 / tvAnim.fps;
+      while (tvAnim.acc >= interval) {
+        tvAnim.acc -= interval;
+        tvAnim.current = (tvAnim.current + 1) % tvAnim.total;
+        // setFrame expects (texture, frameIndex, framesHoriz, framesVert)
+        if (typeof setFrame === 'function') {
+          setFrame(tvAnim.texture, tvAnim.current, tvAnim.framesHoriz, tvAnim.framesVert);
+        } else {
+          console.warn('setFrame is not defined - cannot advance TV sprite sheet');
+        }
+      }
+    }
 
     // Render
     renderer.render(scene, camera);

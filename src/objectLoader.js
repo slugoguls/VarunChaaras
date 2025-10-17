@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { loadGLB } from "./loadGLB.js";
+import { loadSpriteSheet, setFrame } from "./spriteLoader.js";
 
 export const allObjects = {};
 
@@ -18,6 +19,55 @@ export async function loadAllObjects(scene, colliders) {
       const { model, collider } = await loadGLB(path, { position, scale, rotation });
       scene.add(model);
       allObjects[path] = model;
+
+      // If this is the retro TV, add a sprite-sheet plane that will animate as the TV screen
+      if (path === "Models/retroTv.glb") {
+        try {
+          const tvBox = getMeshBoundingBox(model);
+          const boxSize = tvBox.getSize(new THREE.Vector3());
+          const boxCenterLocal = model.worldToLocal(tvBox.getCenter(new THREE.Vector3()));
+
+          // Sheet info (user provided): 58 frames, 320x180 overall, horizontal strip
+          const framesTotal = 58;
+          const framesHoriz = 58;
+          const framesVert = 1;
+          const sheetPath = 'WatchManFinal-Sheet.png';
+
+          const sheetTexture = loadSpriteSheet(sheetPath, framesHoriz, framesVert, () => {
+            console.log('Loaded TV sprite sheet:', sheetPath);
+          });
+
+          // Determine screen dimensions from TV box
+          const screenWidth = Math.max(boxSize.x * 0.475, 0.5);
+          const screenHeight = Math.max(boxSize.y * 0.3, 0.3);
+
+          const sheetGeom = new THREE.PlaneGeometry(screenWidth, screenHeight);
+          const sheetMat = new THREE.MeshBasicMaterial({ map: sheetTexture, transparent: true, toneMapped: false, side: THREE.DoubleSide });
+          const sheetMesh = new THREE.Mesh(sheetGeom, sheetMat);
+          sheetMesh.position.copy(boxCenterLocal);
+          sheetMesh.position.z += (boxSize.z * 0.5) + -0.3265; // push forward a bit
+          sheetMesh.position.x += -0.12;
+          sheetMesh.position.y += -0.085;
+          sheetMesh.renderOrder = 210;
+          model.add(sheetMesh);
+
+          // Start on frame 0
+          setFrame(sheetTexture, 0, framesHoriz, framesVert);
+
+          // Expose animation state to be advanced in the main render loop
+          allObjects['tvSheetAnim'] = {
+            texture: sheetTexture,
+            framesHoriz,
+            framesVert,
+            total: framesTotal,
+            current: 0,
+            fps: 12,
+            acc: 0
+          };
+        } catch (err) {
+          console.warn('Failed to attach sprite-sheet to retro TV:', err);
+        }
+      }
 
       if (path === "Models/redstoneLamp.glb") {
         // Reverted to original material from GLB model
@@ -75,6 +125,7 @@ export async function loadAllObjects(scene, colliders) {
 
   await addObject({ path: "Models/carpet.glb", position: new THREE.Vector3(0, -10.09, -2), scale: new THREE.Vector3(8, 1, 8), addToColliders: false });
   await addObject({ path: "Models/retroTv.glb", position: new THREE.Vector3(-1, -8.5, -4.2), scale: new THREE.Vector3(1.25, 1.25, 1.25), rotation: new THREE.Euler(0, Math.PI/8, 0), addToColliders: false  });
+
   await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(0.5, -8.7, -4.4), scale: new THREE.Vector3(2.25, 2.25, 2.25), rotation: new THREE.Euler(0, Math.PI/2 , 0), addToColliders: false  });
 
   // Chair with custom collider

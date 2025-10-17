@@ -10,7 +10,7 @@ export function loadSpriteSheet(path, framesHoriz, framesVert, onLoad) {
     path,
     () => onLoad && onLoad(),
     undefined,
-    (err) => console.error("❌ Failed to load sprite", err)
+    (err) => console.error(`❌ Failed to load sprite ${path}`, err)
   );
 
   texture.wrapS = THREE.RepeatWrapping;
