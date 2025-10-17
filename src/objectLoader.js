@@ -28,8 +28,8 @@ export async function loadAllObjects(scene, colliders) {
           const boxCenterLocal = model.worldToLocal(tvBox.getCenter(new THREE.Vector3()));
 
           // Sheet info (user provided): 58 frames, 320x180 overall, horizontal strip
-          const framesTotal = 58;
-          const framesHoriz = 58;
+          const framesTotal = 34;
+          const framesHoriz = 34;
           const framesVert = 1;
           const sheetPath = 'WatchManFinal-Sheet.png';
 
@@ -61,7 +61,7 @@ export async function loadAllObjects(scene, colliders) {
             framesVert,
             total: framesTotal,
             current: 0,
-            fps: 12,
+            fps: 10,
             acc: 0
           };
         } catch (err) {
