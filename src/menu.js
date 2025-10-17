@@ -54,6 +54,8 @@ export class MenuScreen {
     this.setupEventListeners();
   // Do not auto-play music; wait for user gesture
   this.musicReady = false;
+  // Guard to prevent duplicate events (touch -> pointer -> click) from double-triggering
+  this._lastInteraction = 0;
   }
   createMuteButton() {
     const textureLoader = new THREE.TextureLoader();
@@ -242,6 +244,10 @@ export class MenuScreen {
     // Click handler
     window.addEventListener('click', (e) => {
       if (!this.menuActive) return;
+      // Prevent duplicate handling if a pointer/touch already fired
+      const now = Date.now();
+      if (now - this._lastInteraction < 400) return;
+      this._lastInteraction = now;
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
       // Start music on first gesture
@@ -255,6 +261,10 @@ export class MenuScreen {
     // Touch handler for mobile
     window.addEventListener('touchend', (e) => {
       if (!this.menuActive) return;
+      // Prevent duplicate handling
+      const now = Date.now();
+      if (now - this._lastInteraction < 400) return;
+      this._lastInteraction = now;
       const touch = e.changedTouches[0];
       this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
@@ -265,6 +275,24 @@ export class MenuScreen {
       }
       this.handleClick();
     });
+
+    // Pointerdown covers mouse and touch in modern browsers and is reliable for taps
+    window.addEventListener('pointerdown', (e) => {
+      if (!this.menuActive) return;
+      const now = Date.now();
+      if (now - this._lastInteraction < 400) return;
+      this._lastInteraction = now;
+      // Use client coords similar to click/touch handlers
+      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      if (!this.musicReady) {
+        this.playMenuMusic();
+        this.musicReady = true;
+      }
+      // Prevent default to avoid passive listener issues
+      if (e.cancelable) e.preventDefault();
+      this.handleClick();
+    }, { passive: false });
   }
 
   updateHover() {
