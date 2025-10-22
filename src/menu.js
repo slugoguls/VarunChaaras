@@ -14,8 +14,8 @@ export class MenuScreen {
     // Message images
     const loader = new THREE.TextureLoader();
     this.msgTextures = {
-      nothing: loader.load('Menu/nothing.png'),
-      start: loader.load('Menu/starthovermsg.png'),
+      nothing: loader.load('Menu/b1.png'),
+      start: loader.load('Menu/startmsg.png'),
       resume: loader.load('Menu/resumemsg.png'),
       settings: loader.load('Menu/settings.png'),
     };

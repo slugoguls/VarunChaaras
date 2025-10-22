@@ -12,7 +12,7 @@ function getMeshBoundingBox(obj) {
   return box;
 }
 
-export async function loadAllObjects(scene, colliders) {
+export async function loadAllObjects(scene, colliders, onProgress = null) {
 
   async function addObject({ path, position, scale, rotation = new THREE.Euler(0,0,0), customCollider = null, addToColliders = true }) {
     try {
@@ -94,8 +94,10 @@ export async function loadAllObjects(scene, colliders) {
         colliders.push({ model: colliderModel, box });
       }
       console.log(`[SUCCESS] Loaded: ${path}`);
+      if (onProgress) onProgress(path, true);
     } catch (err) {
       console.error(`[ERROR] Failed to load ${path}:`, err);
+      if (onProgress) onProgress(path, false);
     }
   }
 
