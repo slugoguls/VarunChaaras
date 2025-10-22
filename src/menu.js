@@ -39,6 +39,11 @@ export class MenuScreen {
     this.frameDuration = 0.1; // 10 frames animation
     this.totalFrames = 10;
 
+  // Mobile detection and selection state
+  this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  this.selectedButton = null; // for tap-to-select on mobile
+  this._selectionTimeoutId = null;
+
     // Menu music setup
     this.menuAudio = new Audio('sounds/outerwilds.mp3');
     this.menuAudio.loop = true;
@@ -299,6 +304,26 @@ export class MenuScreen {
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const intersects = this.raycaster.intersectObjects([...this.buttons, this.muteButton]);
 
+    // If a button is selected on mobile, keep that selected hover visual
+    if (this.isMobile && this.selectedButton) {
+      // Reset all to normal first
+      this.buttons.forEach(button => {
+        button.material.map = button.userData.normalTexture;
+      });
+      // Apply hover visual to selected
+      this.selectedButton.material.map = this.selectedButton.userData.hoverTexture;
+      // Update message based on selected type
+      const t = this.selectedButton.userData.type;
+      let msgType = 'nothing';
+      if (t === 'start') msgType = 'start';
+      if (t === 'resume') msgType = 'resume';
+      if (t === 'settings') msgType = 'settings';
+      this.msgSprite.material.map = this.msgTextures[msgType];
+      this.msgSprite.material.needsUpdate = true;
+      this.updateMsgSpritePosition();
+      return;
+    }
+
     // Reset all buttons to normal
     this.buttons.forEach(button => {
       button.material.map = button.userData.normalTexture;
@@ -332,19 +357,73 @@ export class MenuScreen {
     if (intersects.length > 0) {
       const button = intersects[0].object;
       const type = button.userData.type;
-
-      if (type === 'start') {
-        this.startGame();
-      } else if (type === 'resume') {
-        window.open('https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QwZyggBLgph6/view?usp=sharing', '_blank');
-      } else if (type === 'settings') {
-        alert('Settings coming soon!');
-      } else if (type === 'mute') {
-        // Toggle mute
+      if (type === 'mute') {
+        // Toggle mute immediately
         this.menuAudio.muted = !this.menuAudio.muted;
         this.setMuteFrame(this.menuAudio.muted ? 1 : 0);
+        return;
+      }
+
+      // For mobile: implement tap-to-select -> first tap selects (shows hover & banner), second tap activates
+      if (this.isMobile) {
+        if (this.selectedButton === button) {
+          // Second tap: activate
+          this._activateButton(type);
+          this._clearSelection();
+        } else {
+          // First tap: select
+          this._selectButton(button);
+        }
+      } else {
+        // Desktop: activate immediately
+        this._activateButton(type);
       }
     }
+  }
+
+  _activateButton(type) {
+    if (type === 'start') {
+      this.startGame();
+    } else if (type === 'resume') {
+      window.open('https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QwZyggBLgph6/view?usp=sharing', '_blank');
+    } else if (type === 'settings') {
+      alert('Settings coming soon!');
+    }
+  }
+
+  _selectButton(button) {
+    // Clear previous selection
+    this._clearSelection();
+    this.selectedButton = button;
+    // Apply hover visual
+    this.buttons.forEach(b => b.material.map = b.userData.normalTexture);
+    if (this.selectedButton && this.selectedButton.userData.hoverTexture) {
+      this.selectedButton.material.map = this.selectedButton.userData.hoverTexture;
+    }
+    // Update banner/message
+    const t = this.selectedButton.userData.type;
+    let msgType = 'nothing';
+    if (t === 'start') msgType = 'start';
+    if (t === 'resume') msgType = 'resume';
+    if (t === 'settings') msgType = 'settings';
+    this.msgSprite.material.map = this.msgTextures[msgType];
+    this.msgSprite.material.needsUpdate = true;
+    this.updateMsgSpritePosition();
+    // Auto-clear selection after 4 seconds if no further tap
+    this._selectionTimeoutId = setTimeout(() => this._clearSelection(), 4000);
+  }
+
+  _clearSelection() {
+    if (this._selectionTimeoutId) {
+      clearTimeout(this._selectionTimeoutId);
+      this._selectionTimeoutId = null;
+    }
+    this.selectedButton = null;
+    // Reset visuals
+    this.buttons.forEach(b => b.material.map = b.userData.normalTexture);
+    this.msgSprite.material.map = this.msgTextures.nothing;
+    this.msgSprite.material.needsUpdate = true;
+    this.updateMsgSpritePosition();
   }
 
   startGame() {
