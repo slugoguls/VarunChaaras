@@ -36,6 +36,11 @@ const camera = createCamera();
 const listener = new THREE.AudioListener();
 camera.add(listener);
 scene.add(camera);
+// Active camera (can switch to a static TV camera)
+let activeCamera = camera;
+let staticTvCamera = null;
+let usingStaticCamera = false;
+let canSwitchToTvCamera = false;
 
 // === MENU SCREEN ===
 let gameStarted = false;
@@ -157,6 +162,32 @@ if (table2) {
 const paintings = [];
 await loadAllPaintings(scene, paintings);
 
+// Create a static camera that looks at the retro TV perpendicularly
+const tvModel = allObjects["Models/retroTv.glb"];
+if (tvModel) {
+  staticTvCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+  // Compute TV world position and forward vector so the camera sits in front of the screen
+  const tvWorldPos = new THREE.Vector3();
+  tvModel.getWorldPosition(tvWorldPos);
+
+  const tvWorldQuat = new THREE.Quaternion();
+  tvModel.getWorldQuaternion(tvWorldQuat);
+
+  // Model local forward axis is +Z; transform it to world space
+  const tvForward = new THREE.Vector3(0, 0, 1).applyQuaternion(tvWorldQuat).normalize();
+
+  // Place camera in front of the TV along the forward vector (towards the viewer)
+  // Use a small upward offset so the view centers slightly above the TV center
+  const distance = 1.8;
+  const camPos = tvWorldPos.clone().add(tvForward.clone().multiplyScalar(distance));
+  // raise the camera further and tilt its aim slightly upward so the view looks more 'up'
+  camPos.y = tvWorldPos.y + 1.3;
+  staticTvCamera.position.copy(camPos);
+  // Aim slightly above the TV center so the camera tilts upward
+  const lookAtTarget = tvWorldPos.clone().add(new THREE.Vector3(0, 0.35, 0));
+  staticTvCamera.lookAt(lookAtTarget);
+}
+
 // === MODAL ===
 const modal = document.getElementById("painting-modal");
 const modalImg = document.getElementById("painting-img");
@@ -246,6 +277,11 @@ window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "e" && canInteractWithTable2) {
     window.open("https://github.com/slugoguls", "_blank");
   }
+  // Toggle static TV camera if available and flagged
+  if (e.key.toLowerCase() === "e" && canSwitchToTvCamera && staticTvCamera) {
+    usingStaticCamera = !usingStaticCamera;
+    activeCamera = usingStaticCamera ? staticTvCamera : camera;
+  }
 });
 
 // Handle tap interactions (mobile)
@@ -271,6 +307,11 @@ window.addEventListener("touchend", (e) => {
     // Table2 interaction - Open GitHub
     if (canInteractWithTable2) {
       window.open("https://github.com/slugoguls", "_blank");
+    }
+    // If on the TV decorative area, toggle static TV camera instead of other actions
+    if (canSwitchToTvCamera && staticTvCamera) {
+      usingStaticCamera = !usingStaticCamera;
+      activeCamera = usingStaticCamera ? staticTvCamera : camera;
     }
   }
 });
@@ -321,7 +362,8 @@ if (debugInteractions) {
     leftRect.rotation.set(0, 0, 0);
     leftRect.name = 'table3-left-zone';
     leftRect.renderOrder = 200;
-    scene.add(leftRect);
+  leftRect.visible = false; // keep as activation collider but hide visually
+  scene.add(leftRect);
 
     // Right half (computer)
     const rightGeom = new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth);
@@ -331,6 +373,7 @@ if (debugInteractions) {
     rightRect.rotation.set(0, 0, 0);
     rightRect.name = 'table3-right-zone';
     rightRect.renderOrder = 200;
+    rightRect.visible = false; // hide visual rectangle
     scene.add(rightRect);
   }
 }
@@ -550,11 +593,13 @@ function renderLoop() {
       ui.updateAnimation(delta);
       
     // Set the appropriate flag
+    canSwitchToTvCamera = false;
     if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
     else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
-    // Only the computer interaction should open GitHub. The E above the retro TV (table2)
-    // is decorative/separate and should NOT open Git.
+    // Only the computer interaction should open GitHub.
     else if (closestInteraction.type === 'computer2') canInteractWithTable2 = true;
+    // If the decorative TV area is active, allow switching to the static TV camera
+    else if (closestInteraction.type === 'tableTV') canSwitchToTvCamera = true;
     } else {
       ui.eKeySprite.visible = false;
     }
@@ -583,8 +628,8 @@ function renderLoop() {
       }
     }
 
-    // Render
-    renderer.render(scene, camera);
+  // Render using the currently active camera (player-follow or static TV)
+  renderer.render(scene, activeCamera);
 
     // Debug collisions
     checkCollisions(player.sprite);
@@ -603,6 +648,10 @@ window.addEventListener("resize", () => {
   // Update game camera
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  if (staticTvCamera) {
+    staticTvCamera.aspect = window.innerWidth / window.innerHeight;
+    staticTvCamera.updateProjectionMatrix();
+  }
   
   // Update menu (if active)
   if (menu) {
