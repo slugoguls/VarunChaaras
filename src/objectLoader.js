@@ -39,13 +39,13 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
 
           // Determine screen dimensions from TV box
           const screenWidth = Math.max(boxSize.x * 0.475, 0.5);
-          const screenHeight = Math.max(boxSize.y * 0.3, 0.3);
+          const screenHeight = Math.max(boxSize.y * 0.325, 0.3);
 
           const sheetGeom = new THREE.PlaneGeometry(screenWidth, screenHeight);
           const sheetMat = new THREE.MeshBasicMaterial({ map: sheetTexture, transparent: true, toneMapped: false, side: THREE.DoubleSide });
           const sheetMesh = new THREE.Mesh(sheetGeom, sheetMat);
           sheetMesh.position.copy(boxCenterLocal);
-          sheetMesh.position.z += (boxSize.z * 0.5) + -0.3265; // push forward a bit
+          sheetMesh.position.z += (boxSize.z * 0.5) + -0.32685; // push forward a bit
           sheetMesh.position.x += -0.12;
           sheetMesh.position.y += -0.085;
           sheetMesh.renderOrder = 210;
