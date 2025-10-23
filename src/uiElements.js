@@ -17,30 +17,24 @@ export function createUIElements(scene) {
     try { pressTexture.colorSpace = THREE.SRGBColorSpace; } catch (e) { /* ignore */ }
     const pressMaterial = new THREE.SpriteMaterial({ map: pressTexture, transparent: true, toneMapped: false });
 
-    // Create "TAP" text sprite for mobile
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    
-    function drawTapText(pressed = false) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = pressed ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.7)';
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.lineWidth = 8;
-        ctx.font = 'bold 80px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.strokeText('TAP', canvas.width / 2, canvas.height / 2);
-        ctx.fillText('TAP', canvas.width / 2, canvas.height / 2);
+    // Mobile uses a 2-frame sprite sheet (normal, pressed) instead of canvas TAP text
+    // The mobile sprite is a small 16x16 sprite sheet with 2 horizontal frames.
+    let mobileTexture = null;
+    let mobileMaterial = null;
+    try {
+        mobileTexture = loadSpriteSheet('uiButtons/MobileButton.png', 2, 1, () => {
+            try { setFrame(mobileTexture, 0, 2, 1); } catch (e) {}
+        });
+        try { mobileTexture.colorSpace = THREE.SRGBColorSpace; } catch (e) {}
+        mobileMaterial = new THREE.SpriteMaterial({ map: mobileTexture, transparent: true, toneMapped: false });
+    } catch (err) {
+        // Fallback to pressMaterial if the mobile sprite fails to load
+        mobileMaterial = pressMaterial;
     }
-    
-    drawTapText(false);
-    const tapTexture = new THREE.CanvasTexture(canvas);
-    const tapMaterial = new THREE.SpriteMaterial({ map: tapTexture, transparent: true });
-    
-    const interactionSprite = new THREE.Sprite(isMobile ? tapMaterial : pressMaterial);
-    interactionSprite.scale.set(isMobile ? 1 : 0.55, isMobile ? 0.5 : 0.7, 0.7);
+
+    const interactionSprite = new THREE.Sprite(isMobile ? mobileMaterial : pressMaterial);
+    // Mobile button should be visually larger in world-space so it's easier to hit
+    interactionSprite.scale.set(isMobile ? 1.2 : 0.55, isMobile ? 1.2 : 0.7, 0.7);
     interactionSprite.visible = false;
     // Ensure the sprite always renders on top of world objects
     interactionSprite.renderOrder = 1000;
@@ -56,13 +50,16 @@ export function createUIElements(scene) {
         animationTimer += delta;
         if (animationTimer > 0.5) {
             isPressed = !isPressed;
-            if (isMobile) {
-                drawTapText(isPressed);
-                tapTexture.needsUpdate = true;
-            } else {
-                // Set sprite sheet frame (0 = normal, 1 = pressed)
+            if (!isMobile) {
+                // Set sprite sheet frame for desktop press button (0 = normal, 1 = pressed)
                 setFrame(pressTexture, isPressed ? 1 : 0, 2, 1);
                 if (pressTexture) pressTexture.needsUpdate = true;
+            } else {
+                // Mobile idle animation: toggle between frames subtly
+                if (mobileTexture) {
+                    setFrame(mobileTexture, isPressed ? 1 : 0, 2, 1);
+                    mobileTexture.needsUpdate = true;
+                }
             }
             animationTimer = 0;
         }

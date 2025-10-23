@@ -319,7 +319,30 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("touchend", (e) => {
   // Only trigger if tapping on the 3D canvas (not UI elements like joystick)
   if (e.target.classList.contains('threejs')) {
-    // Record player interaction
+    // Only activate interactions when the mobile E/TAP sprite was tapped.
+    // Do a raycast from the touch point and check intersection with ui.eKeySprite.
+    const touch = e.changedTouches[0];
+    const rect = renderer.domElement.getBoundingClientRect();
+    const tx = ( (touch.clientX - rect.left) / rect.width ) * 2 - 1;
+    const ty = - ( (touch.clientY - rect.top) / rect.height ) * 2 + 1;
+
+    mouse.x = tx;
+    mouse.y = ty;
+    raycaster.setFromCamera(mouse, activeCamera);
+
+    const sprite = ui.eKeySprite;
+    let hitSprite = false;
+    if (sprite && sprite.visible) {
+      const intersects = raycaster.intersectObject(sprite, true);
+      if (intersects && intersects.length > 0) hitSprite = true;
+    }
+
+    if (!hitSprite) {
+      // If user tapped elsewhere, ignore for interactions (prevents accidental activations)
+      return;
+    }
+
+    // If sprite was tapped, run the same interaction mapping as keyboard E
     if (canInteractWithRecordPlayer) {
       if (isPlaying) {
         sound.pause();
@@ -328,21 +351,24 @@ window.addEventListener("touchend", (e) => {
         sound.play();
         isPlaying = true;
       }
+      return;
     }
-    
-    // Research table interaction - Open Resume
+
     if (canInteractWithResearchTable) {
       window.open("https://drive.google.com/file/d/1ERXej7QwJDR-bGuI3RSu7QZyggBLgph6/view?usp=sharing", "_blank");
+      return;
     }
-    
-    // Table2 interaction - Open GitHub
+
     if (canInteractWithTable2) {
       window.open("https://github.com/slugoguls", "_blank");
+      return;
     }
-    // If on the TV decorative area, toggle static TV camera instead of other actions
+
+    // Toggle static TV camera if available and flagged (tapping the TV sprite toggles view)
     if (canSwitchToTvCamera && staticTvCamera) {
       usingStaticCamera = !usingStaticCamera;
       activeCamera = usingStaticCamera ? staticTvCamera : camera;
+      return;
     }
   }
 });
