@@ -163,29 +163,60 @@ const paintings = [];
 await loadAllPaintings(scene, paintings);
 
 // Create a static camera that looks at the retro TV perpendicularly
+// Compute an adaptive distance from the TV bounding box so it always fits in view (mobile-aware)
 const tvModel = allObjects["Models/retroTv.glb"];
 if (tvModel) {
-  staticTvCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-  // Compute TV world position and forward vector so the camera sits in front of the screen
-  const tvWorldPos = new THREE.Vector3();
-  tvModel.getWorldPosition(tvWorldPos);
+  // Choose a slightly wider FOV on small screens so the scene feels closer on mobile
+  const isMobileLike = window.innerWidth < 800;
+  const desiredFov = isMobileLike ? 70 : 50;
 
+  staticTvCamera = new THREE.PerspectiveCamera(desiredFov, window.innerWidth / window.innerHeight, 0.01, 2000);
+
+  // Compute TV bounding box in world space
+  const tvBox = new THREE.Box3().setFromObject(tvModel);
+  const tvSize = new THREE.Vector3();
+  tvBox.getSize(tvSize); // x=width, y=height, z=depth
+  const tvCenter = new THREE.Vector3();
+  tvBox.getCenter(tvCenter);
+
+  // Determine forward vector (local +Z) in world space so we place the camera in front of the screen
   const tvWorldQuat = new THREE.Quaternion();
   tvModel.getWorldQuaternion(tvWorldQuat);
-
-  // Model local forward axis is +Z; transform it to world space
   const tvForward = new THREE.Vector3(0, 0, 1).applyQuaternion(tvWorldQuat).normalize();
 
-  // Place camera in front of the TV along the forward vector (towards the viewer)
-  // Use a small upward offset so the view centers slightly above the TV center
-  const distance = 1.8;
-  const camPos = tvWorldPos.clone().add(tvForward.clone().multiplyScalar(distance));
-  // raise the camera further and tilt its aim slightly upward so the view looks more 'up'
-  camPos.y = tvWorldPos.y + 1.3;
+  // Compute required distance to fit the TV bounding box in the camera frustum
+  // Vertical requirement
+  const fovRad = THREE.MathUtils.degToRad(desiredFov);
+  const halfFov = fovRad / 2;
+  const requiredDistY = (tvSize.y * 0.5) / Math.tan(halfFov);
+
+  // Horizontal requirement: compute horizontal fov from aspect
+  const aspect = window.innerWidth / window.innerHeight;
+  const halfHFov = Math.atan(Math.tan(halfFov) * aspect);
+  const requiredDistX = (tvSize.x * 0.5) / Math.tan(halfHFov);
+
+  // Pick the max required distance and add a margin so it's not tight to the edges
+  const margin = 1.15; // 15% margin
+  let requiredDistance = Math.max(requiredDistX, requiredDistY) * margin;
+
+  // Add a small extra offset so the camera sits a little further back than minimum (helps with rounding/clipping)
+  requiredDistance += Math.max(tvSize.z * 0.5, 0.2);
+
+  // Compute camera position: place it along tvForward from the tv center
+  const camPos = tvCenter.clone().add(tvForward.clone().multiplyScalar(requiredDistance));
+
+  // Slight vertical bias: center the TV vertically in the frame (no large tilt)
+  // Aim camera at the exact bounding-box center to keep the TV centered
   staticTvCamera.position.copy(camPos);
-  // Aim slightly above the TV center so the camera tilts upward
-  const lookAtTarget = tvWorldPos.clone().add(new THREE.Vector3(0, 0.35, 0));
-  staticTvCamera.lookAt(lookAtTarget);
+  staticTvCamera.lookAt(tvCenter);
+
+  // Tweak near plane so the TV doesn't clip on mobile when camera is close
+  staticTvCamera.near = Math.max(requiredDistance * 0.001, 0.01);
+  staticTvCamera.far = Math.max(requiredDistance * 10, 1000);
+  staticTvCamera.updateProjectionMatrix();
+
+  // Store computed values for debugging/adjustments if needed
+  staticTvCamera.userData._tvFit = { requiredDistance, tvSize: tvSize.clone(), tvCenter: tvCenter.clone() };
 }
 
 // === MODAL ===
@@ -542,7 +573,8 @@ function renderLoop() {
     
     // Show E button for closest interaction
     if (closestInteraction) {
-      ui.eKeySprite.visible = true;
+      // Hide the E popup while the static TV camera is active so it doesn't float over the TV
+      ui.eKeySprite.visible = !usingStaticCamera;
       // If this is the table2 interaction (opens GitHub), pin the E popup to a hardcoded location
       // so it reliably appears above the table that opens GitHub.
       if (closestInteraction.type === 'table2') {
@@ -604,9 +636,12 @@ function renderLoop() {
       ui.eKeySprite.visible = false;
     }
 
-    // Update player
-    player.update(delta, colliders);
-    updateCamera();
+    // Update player: freeze movement when viewing the static TV camera
+    if (!usingStaticCamera) {
+      player.update(delta, colliders);
+    }
+    // Camera follow only when not using the static TV camera
+    if (!usingStaticCamera) updateCamera();
 
     // Update Lumi (idle/sleep/walk states)
     if (lumi && lumi.update) lumi.update(delta, player.sprite);
@@ -649,8 +684,49 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   if (staticTvCamera) {
-    staticTvCamera.aspect = window.innerWidth / window.innerHeight;
-    staticTvCamera.updateProjectionMatrix();
+    // If we computed a TV fit originally, recompute distance using new aspect/FOV
+    const tvModel = allObjects["Models/retroTv.glb"];
+    if (tvModel) {
+      try {
+        const tvBox = new THREE.Box3().setFromObject(tvModel);
+        const tvSize = new THREE.Vector3();
+        tvBox.getSize(tvSize);
+        const tvCenter = new THREE.Vector3();
+        tvBox.getCenter(tvCenter);
+
+        const isMobileLike = window.innerWidth < 800;
+        const desiredFov = isMobileLike ? 70 : 50;
+        staticTvCamera.fov = desiredFov;
+        staticTvCamera.aspect = window.innerWidth / window.innerHeight;
+
+        const fovRad = THREE.MathUtils.degToRad(desiredFov);
+        const halfFov = fovRad / 2;
+        const requiredDistY = (tvSize.y * 0.5) / Math.tan(halfFov);
+        const aspect = staticTvCamera.aspect;
+        const halfHFov = Math.atan(Math.tan(halfFov) * aspect);
+        const requiredDistX = (tvSize.x * 0.5) / Math.tan(halfHFov);
+        const margin = 1.15;
+        let requiredDistance = Math.max(requiredDistX, requiredDistY) * margin;
+        requiredDistance += Math.max(tvSize.z * 0.5, 0.2);
+
+        const tvWorldQuat = new THREE.Quaternion();
+        tvModel.getWorldQuaternion(tvWorldQuat);
+        const tvForward = new THREE.Vector3(0, 0, 1).applyQuaternion(tvWorldQuat).normalize();
+        const camPos = tvCenter.clone().add(tvForward.clone().multiplyScalar(requiredDistance));
+        staticTvCamera.position.copy(camPos);
+        staticTvCamera.lookAt(tvCenter);
+        staticTvCamera.near = Math.max(requiredDistance * 0.001, 0.01);
+        staticTvCamera.far = Math.max(requiredDistance * 10, 1000);
+        staticTvCamera.updateProjectionMatrix();
+      } catch (err) {
+        // Fallback: just update aspect if recompute fails
+        staticTvCamera.aspect = window.innerWidth / window.innerHeight;
+        staticTvCamera.updateProjectionMatrix();
+      }
+    } else {
+      staticTvCamera.aspect = window.innerWidth / window.innerHeight;
+      staticTvCamera.updateProjectionMatrix();
+    }
   }
   
   // Update menu (if active)
