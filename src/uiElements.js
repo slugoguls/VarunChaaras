@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadSpriteSheet, setFrame } from './spriteLoader.js';
 
 export function createUIElements(scene) {
     const textureLoader = new THREE.TextureLoader();
@@ -7,11 +8,12 @@ export function createUIElements(scene) {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                      ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    const eKeyTexture = textureLoader.load('uiButtons/E.png');
-    const epKeyTexture = textureLoader.load('uiButtons/EP.png');
-
-    const eKeyMaterial = new THREE.SpriteMaterial({ map: eKeyTexture });
-    const epKeyMaterial = new THREE.SpriteMaterial({ map: epKeyTexture });
+    // Use new 2-frame spritesheet for desktop E button (frame 0 = normal, frame 1 = pressed)
+    const pressTexture = loadSpriteSheet('uiButtons/pressButton.png', 2, 1, () => {
+        // ensure initial frame set after load
+        try { setFrame(pressTexture, 0, 2, 1); } catch (e) {}
+    });
+    const pressMaterial = new THREE.SpriteMaterial({ map: pressTexture, transparent: true });
 
     // Create "TAP" text sprite for mobile
     const canvas = document.createElement('canvas');
@@ -35,7 +37,7 @@ export function createUIElements(scene) {
     const tapTexture = new THREE.CanvasTexture(canvas);
     const tapMaterial = new THREE.SpriteMaterial({ map: tapTexture, transparent: true });
     
-    const interactionSprite = new THREE.Sprite(isMobile ? tapMaterial : eKeyMaterial);
+    const interactionSprite = new THREE.Sprite(isMobile ? tapMaterial : pressMaterial);
     interactionSprite.scale.set(isMobile ? 1 : 0.5, isMobile ? 0.5 : 0.7, 0.7);
     interactionSprite.visible = false;
 
@@ -50,7 +52,9 @@ export function createUIElements(scene) {
                 drawTapText(isPressed);
                 tapTexture.needsUpdate = true;
             } else {
-                interactionSprite.material = isPressed ? epKeyMaterial : eKeyMaterial;
+                // Set sprite sheet frame (0 = normal, 1 = pressed)
+                setFrame(pressTexture, isPressed ? 1 : 0, 2, 1);
+                if (pressTexture) pressTexture.needsUpdate = true;
             }
             animationTimer = 0;
         }
