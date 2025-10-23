@@ -451,15 +451,17 @@ function renderLoop() {
     }
 
     // Check explicit computer2 interaction (position E directly above computer)
-    if (computer2) {
-      const dx = player.sprite.position.x - computer2.position.x;
-      const dz = player.sprite.position.z - computer2.position.z;
+    // Use runtime lookup so we work if models load later
+    const comp = allObjects["Models/computer2.glb"];
+    if (comp) {
+      const dx = player.sprite.position.x - comp.position.x;
+      const dz = player.sprite.position.z - comp.position.z;
       const distance = Math.sqrt(dx * dx + dz * dz);
       if (distance < 2.5 && distance < closestDistance) {
         closestDistance = distance;
         closestInteraction = {
           type: 'computer2',
-          position: computer2.position,
+          position: comp.position,
           yOffset: 2.2
         };
       }
@@ -468,22 +470,41 @@ function renderLoop() {
     // Show E button for closest interaction
     if (closestInteraction) {
       ui.eKeySprite.visible = true;
-      // If this is the computer2 interaction, ensure the E popup sits directly above the computer model
-      if (closestInteraction.type === 'computer2') {
-        ui.eKeySprite.position.set(computer2.position.x, computer2.position.y + 2.2, computer2.position.z);
+      // If this is the table2 interaction (opens GitHub), pin the E popup to a hardcoded location
+      // so it reliably appears above the table that opens GitHub.
+      if (closestInteraction.type === 'table2') {
+        // Hardcoded position above the retro TV so this E appears over the TV
+        // Retro TV is placed around (-1, -8.5, -4.2) in objectLoader; raise Y slightly
+        ui.eKeySprite.position.set(-1, -7.5, -4.2);
+      } else if (closestInteraction.type === 'computer2') {
+        // For the computer interaction, try to place above the model's bounding box top.
+        const compModel = allObjects["Models/computer2.glb"];
+        if (compModel) {
+          const box = new THREE.Box3().setFromObject(compModel);
+          const topY = box.max.y;
+          ui.eKeySprite.position.set(compModel.position.x, topY + 0.2, compModel.position.z);
+        } else {
+          ui.eKeySprite.position.set(
+            closestInteraction.position.x,
+            closestInteraction.position.y + closestInteraction.yOffset,
+            closestInteraction.position.z
+          );
+        }
       } else {
         ui.eKeySprite.position.set(
-          closestInteraction.position.x, 
-          closestInteraction.position.y + closestInteraction.yOffset, 
+          closestInteraction.position.x,
+          closestInteraction.position.y + closestInteraction.yOffset,
           closestInteraction.position.z
         );
       }
       ui.updateAnimation(delta);
       
-      // Set the appropriate flag
-      if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
-      else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
-      else if (closestInteraction.type === 'table2') canInteractWithTable2 = true;
+    // Set the appropriate flag
+    if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
+    else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
+    // Only the computer interaction should open GitHub. The E above the retro TV (table2)
+    // is decorative/separate and should NOT open Git.
+    else if (closestInteraction.type === 'computer2') canInteractWithTable2 = true;
     } else {
       ui.eKeySprite.visible = false;
     }
