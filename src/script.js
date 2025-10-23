@@ -337,8 +337,15 @@ window.addEventListener("touchend", (e) => {
       if (intersects && intersects.length > 0) hitSprite = true;
     }
 
+    // If we are currently viewing the static TV camera, tapping anywhere on the canvas should exit it
+    if (usingStaticCamera) {
+      usingStaticCamera = false;
+      activeCamera = camera;
+      return;
+    }
+
     if (!hitSprite) {
-      // If user tapped elsewhere, ignore for interactions (prevents accidental activations)
+      // If user tapped elsewhere while not in static camera, ignore for interactions
       return;
     }
 

@@ -33,8 +33,8 @@ export function createUIElements(scene) {
     }
 
     const interactionSprite = new THREE.Sprite(isMobile ? mobileMaterial : pressMaterial);
-    // Mobile button should be visually larger in world-space so it's easier to hit
-    interactionSprite.scale.set(isMobile ? 1.2 : 0.55, isMobile ? 1.2 : 0.7, 0.7);
+    // Mobile button slightly smaller for better composition; keep desktop the same
+    interactionSprite.scale.set(isMobile ? 0.9 : 0.55, isMobile ? 0.9 : 0.7, 0.7);
     interactionSprite.visible = false;
     // Ensure the sprite always renders on top of world objects
     interactionSprite.renderOrder = 1000;
