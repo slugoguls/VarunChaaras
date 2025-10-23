@@ -13,7 +13,9 @@ export function createUIElements(scene) {
         // ensure initial frame set after load
         try { setFrame(pressTexture, 0, 2, 1); } catch (e) {}
     });
-    const pressMaterial = new THREE.SpriteMaterial({ map: pressTexture, transparent: true });
+    // Ensure correct color space so colors aren't washed out/overbright
+    try { pressTexture.colorSpace = THREE.SRGBColorSpace; } catch (e) { /* ignore */ }
+    const pressMaterial = new THREE.SpriteMaterial({ map: pressTexture, transparent: true, toneMapped: false });
 
     // Create "TAP" text sprite for mobile
     const canvas = document.createElement('canvas');
@@ -38,7 +40,7 @@ export function createUIElements(scene) {
     const tapMaterial = new THREE.SpriteMaterial({ map: tapTexture, transparent: true });
     
     const interactionSprite = new THREE.Sprite(isMobile ? tapMaterial : pressMaterial);
-    interactionSprite.scale.set(isMobile ? 1 : 0.5, isMobile ? 0.5 : 0.7, 0.7);
+    interactionSprite.scale.set(isMobile ? 1 : 0.55, isMobile ? 0.5 : 0.7, 0.7);
     interactionSprite.visible = false;
 
     let isPressed = false;
