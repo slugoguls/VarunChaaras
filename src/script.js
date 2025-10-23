@@ -126,10 +126,14 @@ await loadAllObjects(scene, colliders);
 
 const ui = createUIElements(scene);
 const recordPlayer = allObjects["Models/record_player.glb"];
-recordPlayer.add(sound);
+if (recordPlayer) {
+  try { recordPlayer.add(sound); } catch (e) { console.warn('recordPlayer not ready to add sound yet'); }
+}
 
 const researchTable = allObjects["Models/research_table.glb"];
 const table2 = allObjects["Models/table2.glb"];
+const computer2 = allObjects["Models/computer2.glb"];
+const table3 = allObjects["Models/Table3.glb"];
 
 console.log("Record Player:", recordPlayer ? "✅ Loaded" : "❌ Not found");
 console.log("Research Table:", researchTable ? "✅ Loaded" : "❌ Not found");
@@ -286,34 +290,56 @@ function checkCollisions(playerObject) {
 lumi = await createLumiCat(scene, colliders, boundary);
 
 // === DEBUG INTERACTION AREAS ===
-const debugInteractions = false; // Set to true to show debug spheres
+// Set to true to visualize activation areas (spheres will be added for interactable objects)
+const debugInteractions = true;
 
 console.log("Player Y position:", player.sprite.position.y);
 
 if (debugInteractions) {
   // Record player debug sphere - at player's Y level for visibility
-  const recordPlayerSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(2, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.3 })
-  );
-  recordPlayerSphere.position.set(recordPlayer.position.x, player.sprite.position.y, recordPlayer.position.z);
-  scene.add(recordPlayerSphere);
+  const table2 = allObjects["Models/table2.glb"];
+  const table3 = allObjects["Models/Table3.glb"];
+  const computer2 = allObjects["Models/computer2.glb"];
 
+  if (recordPlayer) {
+    const recordPlayerSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    // Position sphere at the object's Y (not player's Y) to avoid occluding the player
+    recordPlayerSphere.position.set(recordPlayer.position.x, recordPlayer.position.y + 1.0, recordPlayer.position.z);
+    scene.add(recordPlayerSphere);
+  }
   // Research table debug sphere - at player's Y level
-  const researchTableSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(2.5, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.3 })
-  );
-  researchTableSphere.position.set(researchTable.position.x, player.sprite.position.y, researchTable.position.z);
-  scene.add(researchTableSphere);
+  if (researchTable) {
+    const researchTableSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    researchTableSphere.position.set(researchTable.position.x, researchTable.position.y + 1.0, researchTable.position.z);
+    scene.add(researchTableSphere);
+  }
 
   // Table2 debug sphere - at player's Y level
-  const table2Sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(2.5, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true, transparent: true, opacity: 0.3 })
-  );
-  table2Sphere.position.set(table2.position.x, player.sprite.position.y, table2.position.z);
-  scene.add(table2Sphere);
+  if (table2) {
+    const table2Sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    table2Sphere.position.set(table2.position.x, table2.position.y + 1.0, table2.position.z);
+    scene.add(table2Sphere);
+  }
+
+  // (computer2 debug sphere removed to avoid duplicate activation with table3)
+
+  if (table3) {
+    const table3Sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    table3Sphere.position.set(table3.position.x, table3.position.y + 1.0, table3.position.z);
+    scene.add(table3Sphere);
+  }
 }
 
 // === RENDER LOOP ===
@@ -408,15 +434,50 @@ function renderLoop() {
         };
       }
     }
+
+    // Check table3 (treat same as table2 - opens GitHub)
+    if (table3) {
+      const dx = player.sprite.position.x - table3.position.x;
+      const dz = player.sprite.position.z - table3.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 2.5 && distance < closestDistance) {
+        closestDistance = distance;
+        closestInteraction = {
+          type: 'table2',
+          position: table3.position,
+          yOffset: 3
+        };
+      }
+    }
+
+    // Check explicit computer2 interaction (position E directly above computer)
+    if (computer2) {
+      const dx = player.sprite.position.x - computer2.position.x;
+      const dz = player.sprite.position.z - computer2.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 2.5 && distance < closestDistance) {
+        closestDistance = distance;
+        closestInteraction = {
+          type: 'computer2',
+          position: computer2.position,
+          yOffset: 2.2
+        };
+      }
+    }
     
     // Show E button for closest interaction
     if (closestInteraction) {
       ui.eKeySprite.visible = true;
-      ui.eKeySprite.position.set(
-        closestInteraction.position.x, 
-        closestInteraction.position.y + closestInteraction.yOffset, 
-        closestInteraction.position.z
-      );
+      // If this is the computer2 interaction, ensure the E popup sits directly above the computer model
+      if (closestInteraction.type === 'computer2') {
+        ui.eKeySprite.position.set(computer2.position.x, computer2.position.y + 2.2, computer2.position.z);
+      } else {
+        ui.eKeySprite.position.set(
+          closestInteraction.position.x, 
+          closestInteraction.position.y + closestInteraction.yOffset, 
+          closestInteraction.position.z
+        );
+      }
       ui.updateAnimation(delta);
       
       // Set the appropriate flag

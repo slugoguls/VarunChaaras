@@ -42,6 +42,12 @@ export function createUIElements(scene) {
     const interactionSprite = new THREE.Sprite(isMobile ? tapMaterial : pressMaterial);
     interactionSprite.scale.set(isMobile ? 1 : 0.55, isMobile ? 0.5 : 0.7, 0.7);
     interactionSprite.visible = false;
+    // Ensure the sprite always renders on top of world objects
+    interactionSprite.renderOrder = 1000;
+    if (interactionSprite.material) {
+        interactionSprite.material.depthTest = false;
+        interactionSprite.material.depthWrite = false;
+    }
 
     let isPressed = false;
     let animationTimer = 0;
