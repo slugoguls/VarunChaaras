@@ -301,44 +301,37 @@ if (debugInteractions) {
   const table3 = allObjects["Models/Table3.glb"];
   const computer2 = allObjects["Models/computer2.glb"];
 
-  if (recordPlayer) {
-    const recordPlayerSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.45 })
-    );
-    // Position sphere at the object's Y (not player's Y) to avoid occluding the player
-    recordPlayerSphere.position.set(recordPlayer.position.x, recordPlayer.position.y + 1.0, recordPlayer.position.z);
-    scene.add(recordPlayerSphere);
-  }
-  // Research table debug sphere - at player's Y level
-  if (researchTable) {
-    const researchTableSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2.5, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.45 })
-    );
-    researchTableSphere.position.set(researchTable.position.x, researchTable.position.y + 1.0, researchTable.position.z);
-    scene.add(researchTableSphere);
-  }
+  // (debug spheres removed; using rectangular halves on Table3 as activation zones)
 
-  // Table2 debug sphere - at player's Y level
-  if (table2) {
-    const table2Sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2.5, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true, transparent: true, opacity: 0.45 })
-    );
-    table2Sphere.position.set(table2.position.x, table2.position.y + 1.0, table2.position.z);
-    scene.add(table2Sphere);
-  }
-
-  // (computer2 debug sphere removed to avoid duplicate activation with table3)
-
+  // If we have Table3, draw two rectangular halves on the table top: left=retro TV, right=computer
   if (table3) {
-    const table3Sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2.5, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true, transparent: true, opacity: 0.45 })
-    );
-    table3Sphere.position.set(table3.position.x, table3.position.y + 1.0, table3.position.z);
-    scene.add(table3Sphere);
+    // Table3 collider used a top width of ~2.5 and depth ~4.5 in objectLoader.js
+    const tableTopWidth = 2.5;
+    const tableTopDepth = 4.5;
+    const halfWidth = tableTopWidth / 2; // 1.25
+    const halfOffset = halfWidth / 2; // center offset for halves = 0.625
+    const tableTopY = table3.position.y + 2.0; // matches custom collider's lifted Y
+
+    // Left half (retro TV)
+    const leftGeom = new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth);
+    const leftMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.35 });
+    const leftRect = new THREE.Mesh(leftGeom, leftMat);
+  // move left rect slightly further left and a bit up to align with the retro TV
+  leftRect.position.set(table3.position.x - halfOffset - 0.4, tableTopY + 0.06, table3.position.z);
+    leftRect.rotation.set(0, 0, 0);
+    leftRect.name = 'table3-left-zone';
+    leftRect.renderOrder = 200;
+    scene.add(leftRect);
+
+    // Right half (computer)
+    const rightGeom = new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth);
+    const rightMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.35 });
+    const rightRect = new THREE.Mesh(rightGeom, rightMat);
+    rightRect.position.set(table3.position.x + halfOffset, tableTopY + 0.01, table3.position.z);
+    rightRect.rotation.set(0, 0, 0);
+    rightRect.name = 'table3-right-zone';
+    rightRect.renderOrder = 200;
+    scene.add(rightRect);
   }
 }
 
@@ -435,18 +428,55 @@ function renderLoop() {
       }
     }
 
-    // Check table3 (treat same as table2 - opens GitHub)
+    // Check table3 halves (left = retro TV decorative, right = computer Git interaction)
     if (table3) {
-      const dx = player.sprite.position.x - table3.position.x;
-      const dz = player.sprite.position.z - table3.position.z;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      if (distance < 2.5 && distance < closestDistance) {
-        closestDistance = distance;
-        closestInteraction = {
-          type: 'table2',
-          position: table3.position,
-          yOffset: 3
-        };
+      // Table top dimensions (match objectLoader custom collider): width ~2.5, depth ~4.5
+      const tableTopWidth = 2.5;
+      const tableTopDepth = 4.5;
+      const halfWidth = tableTopWidth / 2; // 1.25
+      const halfOffset = halfWidth / 2; // 0.625
+
+      // Centers for left and right halves
+      const leftCenter = new THREE.Vector3(table3.position.x - halfOffset, table3.position.y + 2.0, table3.position.z);
+      const rightCenter = new THREE.Vector3(table3.position.x + halfOffset, table3.position.y + 2.0, table3.position.z);
+
+      const px = player.sprite.position.x;
+      const pz = player.sprite.position.z;
+
+      // Helper: is point inside rectangle centered at (cx,cz) with extents (wx, wz)
+      const insideRect = (cx, cz, wx, wz) => {
+        return Math.abs(px - cx) <= wx / 2 && Math.abs(pz - cz) <= wz / 2;
+      };
+
+      // Left half (decorative - retro TV)
+      if (insideRect(leftCenter.x, leftCenter.z, halfWidth, tableTopDepth)) {
+        const dx = px - leftCenter.x;
+        const dz = pz - leftCenter.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestInteraction = {
+            type: 'tableTV', // decorative, does NOT open Git
+            position: leftCenter,
+            yOffset: 2.5
+          };
+        }
+      }
+
+      // Right half (maps to computer interaction so pressing E opens Git)
+      if (insideRect(rightCenter.x, rightCenter.z, halfWidth, tableTopDepth)) {
+        const dx = px - rightCenter.x;
+        const dz = pz - rightCenter.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          // Map this to the computer2 interaction so it uses the computer bounding box for E placement
+          closestInteraction = {
+            type: 'computer2',
+            position: rightCenter,
+            yOffset: 2.5
+          };
+        }
       }
     }
 
@@ -476,10 +506,30 @@ function renderLoop() {
         // Hardcoded position above the retro TV so this E appears over the TV
         // Retro TV is placed around (-1, -8.5, -4.2) in objectLoader; raise Y slightly
         ui.eKeySprite.position.set(-1, -7.5, -4.2);
+      } else if (closestInteraction.type === 'tableTV') {
+        // Place the E just above the retro TV model if available, otherwise slightly lower than before
+        const tvModel = allObjects["Models/retroTv.glb"];
+        if (tvModel) {
+          const box = new THREE.Box3().setFromObject(tvModel);
+          const topY = box.max.y;
+          ui.eKeySprite.position.set(tvModel.position.x, topY + 0.05, tvModel.position.z);
+        } else {
+          ui.eKeySprite.position.set(
+            closestInteraction.position.x,
+            closestInteraction.position.y + 1.2,
+            closestInteraction.position.z
+          );
+        }
       } else if (closestInteraction.type === 'computer2') {
-        // For the computer interaction, try to place above the model's bounding box top.
+        // For the computer interaction, prefer to align the E's Y with the retro TV E Y
         const compModel = allObjects["Models/computer2.glb"];
-        if (compModel) {
+        const tvModel = allObjects["Models/retroTv.glb"];
+        if (compModel && tvModel) {
+          const tvBox = new THREE.Box3().setFromObject(tvModel);
+          const tvTopY = tvBox.max.y;
+          // place the Git E at the same height above the TV (gives consistent visual alignment)
+          ui.eKeySprite.position.set(compModel.position.x, tvTopY + 0.05, compModel.position.z);
+        } else if (compModel) {
           const box = new THREE.Box3().setFromObject(compModel);
           const topY = box.max.y;
           ui.eKeySprite.position.set(compModel.position.x, topY + 0.2, compModel.position.z);

@@ -130,24 +130,7 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
 
   await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(0.5, -8.7, -4.4), scale: new THREE.Vector3(2.25, 2.25, 2.25), rotation: new THREE.Euler(0, Math.PI/2 , 0), addToColliders: false  });
 
-  // Chair with custom collider
-  await addObject({
-    path: "Models/chair.glb",
-    position: new THREE.Vector3(1, -10, -2.5),
-    scale: new THREE.Vector3(1.25, 1.25, 1.25),
-    rotation: new THREE.Euler(0, Math.PI * -0.7, 0),
-    customCollider: (model) => {
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0 });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.copy(model.position);
-      mesh.rotation.copy(model.rotation);
-      const helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(mesh), 0x00ff00);
-      helper.visible = false;
-      scene.add(helper);
-      return mesh;
-    }
-  });
+  
 
   await addObject({ path: "Models/record_table.glb", position: new THREE.Vector3(-5.8, -10, -8.5), scale: new THREE.Vector3(0.1, 0.1, 0.1) });
   await addObject({ path: "Models/research_table.glb", position: new THREE.Vector3(-2.75, -10, -9.25), scale: new THREE.Vector3(1.5,1.5, 1.5),  rotation: new THREE.Euler(0, -Math.PI/2, 0) });
