@@ -96,6 +96,19 @@ export class MenuScreen {
 
   playMenuMusic() {
     if (!this.menuAudioStarted) {
+      // Try to enter browser fullscreen on first user gesture. Many browsers
+      // only allow requestFullscreen() inside a user-initiated event, and
+      // this method is called from click/touch/pointer handlers.
+      try {
+        if (document.fullscreenEnabled && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch((err) => {
+            console.warn('Fullscreen request failed:', err);
+          });
+        }
+      } catch (err) {
+        console.warn('Fullscreen attempt error:', err);
+      }
+
       this.menuAudio.play();
       this.menuAudioStarted = true;
     }
