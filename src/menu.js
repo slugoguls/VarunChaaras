@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SpaceCat } from './spaceCat.js';
 
 export class MenuScreen {
   constructor(onStart) {
@@ -55,8 +56,9 @@ export class MenuScreen {
     this.muteFrame = 0; // 0 = unmuted, 1 = muted
     this.createBackground();
     this.createButtons();
-    this.createMuteButton();
-    this.setupEventListeners();
+  this.createMuteButton();
+  this.spaceCat = new SpaceCat(this.scene, this.camera);
+  this.setupEventListeners();
   // Do not auto-play music; wait for user gesture
   this.musicReady = false;
   // Guard to prevent duplicate events (touch -> pointer -> click) from double-triggering
@@ -450,7 +452,6 @@ export class MenuScreen {
 
   update(delta) {
     if (!this.menuActive) return;
-    
     // Animate background
     this.frameTimer += delta;
     if (this.frameTimer >= this.frameDuration) {
@@ -458,6 +459,8 @@ export class MenuScreen {
       this.setBackgroundFrame(this.currentFrame);
       this.frameTimer = 0;
     }
+    // Update space cat
+    if (this.spaceCat) this.spaceCat.update(delta);
   }
 
   render(renderer) {
