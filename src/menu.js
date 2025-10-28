@@ -1,30 +1,76 @@
 import * as THREE from 'three';
+// Loading overlay helpers
+function showLoadingOverlay() {
+  if (document.getElementById('menu-loading-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'menu-loading-overlay';
+  overlay.style = `position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-size:2rem;font-family:sans-serif;`;
+  overlay.innerHTML = 'Loading assets...';
+  document.body.appendChild(overlay);
+}
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('menu-loading-overlay');
+  if (overlay) overlay.remove();
+}
 import { SpaceCat } from './spaceCat.js';
 
 export class MenuScreen {
   constructor(onStart) {
     this.onStart = onStart;
+    showLoadingOverlay();
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000000); // Black background
-
-    // Use screen aspect ratio for camera
+    this.scene.background = new THREE.Color(0x000000);
     const aspect = window.innerWidth / window.innerHeight;
     this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
     this.camera.position.z = 1;
 
+    // Asset loading counter
+    this._assetsLoaded = 0;
+    this._assetsToLoad = 11; // msg textures (4), bg, buttons (6), mute
+    const onAssetLoaded = () => {
+      this._assetsLoaded++;
+      if (this._assetsLoaded >= this._assetsToLoad) {
+        hideLoadingOverlay();
+        this._showMenu();
+      }
+    };
+
     // Message images
     const loader = new THREE.TextureLoader();
     this.msgTextures = {
-      nothing: loader.load('Menu/b1.png'),
-      start: loader.load('Menu/startmsg.png'),
-      resume: loader.load('Menu/resumemsg.png'),
-      settings: loader.load('Menu/settings.png'),
+      nothing: loader.load('Menu/b1.png', onAssetLoaded),
+      start: loader.load('Menu/startmsg.png', onAssetLoaded),
+      resume: loader.load('Menu/resumemsg.png', onAssetLoaded),
+      settings: loader.load('Menu/settings.png', onAssetLoaded),
     };
     Object.values(this.msgTextures).forEach(tex => {
       tex.minFilter = THREE.NearestFilter;
       tex.magFilter = THREE.NearestFilter;
       tex.colorSpace = THREE.SRGBColorSpace;
     });
+    // Background
+    loader.load('Menu/menuSheet.png', onAssetLoaded);
+    // Buttons
+    loader.load('Menu/Start.png', onAssetLoaded);
+    loader.load('Menu/StartHover.png', onAssetLoaded);
+    loader.load('Menu/resume.png', onAssetLoaded);
+    loader.load('Menu/resumeHover.png', onAssetLoaded);
+    loader.load('Menu/Setting.png', onAssetLoaded);
+    loader.load('Menu/SettingsHover.png', onAssetLoaded);
+    // Mute
+    loader.load('Menu/MenuMute.png', onAssetLoaded);
+    // SpaceCat is created after assets load
+    // Do not auto-play music; wait for user gesture
+    this.musicReady = false;
+    this._lastInteraction = 0;
+
+    // Responsive resize
+    window.addEventListener('resize', () => this.handleResize());
+    window.addEventListener('orientationchange', () => this.handleResize());
+  }
+
+  _showMenu() {
+    // ...existing code...
     this.msgSprite = new THREE.Sprite(new THREE.SpriteMaterial({
       map: this.msgTextures.nothing,
       transparent: true,
@@ -33,36 +79,29 @@ export class MenuScreen {
     this.msgSprite.renderOrder = 20;
     this.scene.add(this.msgSprite);
     this.updateMsgSpritePosition();
-
     this.menuActive = true;
     this.currentFrame = 0;
     this.frameTimer = 0;
-    this.frameDuration = 0.1; // 10 frames animation
+    this.frameDuration = 0.1;
     this.totalFrames = 10;
-
-  // Mobile detection and selection state
-  this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  this.selectedButton = null; // for tap-to-select on mobile
-  this._selectionTimeoutId = null;
-
-    // Menu music setup
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    this.selectedButton = null;
+    this._selectionTimeoutId = null;
     this.menuAudio = new Audio('sounds/outerwilds.mp3');
     this.menuAudio.loop = true;
     this.menuAudio.volume = 0.2;
     this.menuAudio.muted = false;
     this.menuAudioStarted = false;
-
-    // Mute button setup
-    this.muteFrame = 0; // 0 = unmuted, 1 = muted
+    this.muteFrame = 0;
     this.createBackground();
     this.createButtons();
-  this.createMuteButton();
-  this.spaceCat = new SpaceCat(this.scene, this.camera);
-  this.setupEventListeners();
-  // Do not auto-play music; wait for user gesture
-  this.musicReady = false;
-  // Guard to prevent duplicate events (touch -> pointer -> click) from double-triggering
-  this._lastInteraction = 0;
+    this.createMuteButton();
+    if (this.spaceCat && this.spaceCat.spaceCat) {
+      this.scene.remove(this.spaceCat.spaceCat);
+    }
+    this.spaceCat = new SpaceCat(this.scene, this.camera);
+    this.setupEventListeners();
+    this.handleResize(); // Ensure correct proportions on show
   }
   createMuteButton() {
     const textureLoader = new THREE.TextureLoader();
