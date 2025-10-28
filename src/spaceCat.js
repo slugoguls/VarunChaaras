@@ -40,7 +40,8 @@ export class SpaceCat {
   this.scene.add(this.spaceCat);
 
   // Debug: show collision circle
-  const geometry = new THREE.CircleGeometry(0.3, 32); // Match cat's scale (0.6/2)
+  const thisCircleRadius = 0.13; // Slightly bigger for better fit
+  const geometry = new THREE.CircleGeometry(thisCircleRadius, 32);
   const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
   this.collisionCircle = new THREE.Mesh(geometry, material);
   this.collisionCircle.position.set(this.spaceCatBasePos.x, this.spaceCatBasePos.y, 0.49);
@@ -53,13 +54,12 @@ export class SpaceCat {
     // Bobbing
     const t = performance.now() * 0.001;
     const bob = Math.sin(t * 1.2) * 0.02 + Math.sin(t * 0.7) * 0.01;
-    // Bounds in menu (orthographic camera)
-    const halfW = this.spaceCat.scale.x * 0.5;
-    const halfH = this.spaceCat.scale.y * 0.5;
-    const left = this.camera.left + halfW;
-    const right = this.camera.right - halfW;
-    const top = this.camera.top - halfH;
-    const bottom = this.camera.bottom + halfH;
+  // Bounds in menu (orthographic camera) - use collision circle radius
+  const circleRadius = this.collisionCircle ? this.collisionCircle.geometry.parameters.radius : this.spaceCat.scale.x * 0.5;
+  const left = this.camera.left + circleRadius;
+  const right = this.camera.right - circleRadius;
+  const top = this.camera.top - circleRadius;
+  const bottom = this.camera.bottom + circleRadius;
     // Drag logic
     if (!this.spaceCatDragging) {
       let vlen = Math.hypot(this.spaceCatVelocity.x, this.spaceCatVelocity.y) || 1;
