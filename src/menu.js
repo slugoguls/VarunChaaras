@@ -96,8 +96,9 @@ export class MenuScreen {
     this.createBackground();
     this.createButtons();
     this.createMuteButton();
-    if (this.spaceCat && this.spaceCat.spaceCat) {
-      this.scene.remove(this.spaceCat.spaceCat);
+    if (this.spaceCat) {
+      if (this.spaceCat.spaceCat) this.scene.remove(this.spaceCat.spaceCat);
+      if (this.spaceCat.collisionCircle) this.scene.remove(this.spaceCat.collisionCircle);
     }
     this.spaceCat = new SpaceCat(this.scene, this.camera);
     this.setupEventListeners();

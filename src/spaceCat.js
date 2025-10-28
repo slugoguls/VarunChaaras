@@ -37,7 +37,14 @@ export class SpaceCat {
     this.spaceCat.scale.set(0.6, 0.6, 1);
     this.spaceCat.position.set(this.spaceCatBasePos.x, this.spaceCatBasePos.y, 0.5);
     this.spaceCat.renderOrder = 50;
-    this.scene.add(this.spaceCat);
+  this.scene.add(this.spaceCat);
+
+  // Debug: show collision circle
+  const geometry = new THREE.CircleGeometry(0.3, 32); // Match cat's scale (0.6/2)
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
+  this.collisionCircle = new THREE.Mesh(geometry, material);
+  this.collisionCircle.position.set(this.spaceCatBasePos.x, this.spaceCatBasePos.y, 0.49);
+  this.scene.add(this.collisionCircle);
     this.setupEventListeners();
   }
 
@@ -87,6 +94,10 @@ export class SpaceCat {
     // Apply position and bob
     this.spaceCat.position.x = this.spaceCatBasePos.x;
     this.spaceCat.position.y = this.spaceCatBasePos.y + bob;
+    if (this.collisionCircle) {
+      this.collisionCircle.position.x = this.spaceCatBasePos.x;
+      this.collisionCircle.position.y = this.spaceCatBasePos.y;
+    }
     // Frame animation: awake (frame 0) while dragging or for 3s after release, else loop sleeping frames 1-5
     if (this.spaceCatAwake) {
       this.spaceCatTimer += delta;
