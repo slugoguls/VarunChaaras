@@ -1,23 +1,10 @@
 import * as THREE from 'three';
-// Loading overlay helpers
-function showLoadingOverlay() {
-  if (document.getElementById('menu-loading-overlay')) return;
-  const overlay = document.createElement('div');
-  overlay.id = 'menu-loading-overlay';
-  overlay.style = `position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-size:2rem;font-family:sans-serif;`;
-  overlay.innerHTML = 'Loading assets...';
-  document.body.appendChild(overlay);
-}
-function hideLoadingOverlay() {
-  const overlay = document.getElementById('menu-loading-overlay');
-  if (overlay) overlay.remove();
-}
 import { SpaceCat } from './spaceCat.js';
 
 export class MenuScreen {
   constructor(onStart) {
     this.onStart = onStart;
-    showLoadingOverlay();
+  // Show the main loading screen (already present in index.html)
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
     const aspect = window.innerWidth / window.innerHeight;
@@ -30,7 +17,9 @@ export class MenuScreen {
     const onAssetLoaded = () => {
       this._assetsLoaded++;
       if (this._assetsLoaded >= this._assetsToLoad) {
-        hideLoadingOverlay();
+        // Hide the main loading screen and show menu
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) loadingScreen.style.display = 'none';
         this._showMenu();
       }
     };
@@ -70,7 +59,8 @@ export class MenuScreen {
   }
 
   _showMenu() {
-    // ...existing code...
+  // ...existing code...
+  // Menu visuals now show immediately after assets load, no tap required
     this.msgSprite = new THREE.Sprite(new THREE.SpriteMaterial({
       map: this.msgTextures.nothing,
       transparent: true,
@@ -301,16 +291,14 @@ export class MenuScreen {
       this.updateHover();
     });
 
-    // Click handler
+    // Click handler (only needed for music, not for menu visuals)
     window.addEventListener('click', (e) => {
       if (!this.menuActive) return;
-      // Prevent duplicate handling if a pointer/touch already fired
       const now = Date.now();
       if (now - this._lastInteraction < 400) return;
       this._lastInteraction = now;
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      // Start music on first gesture
       if (!this.musicReady) {
         this.playMenuMusic();
         this.musicReady = true;
@@ -318,41 +306,21 @@ export class MenuScreen {
       this.handleClick();
     });
 
-    // Touch handler for mobile
+    // Touch handler for mobile (only needed for music)
     window.addEventListener('touchend', (e) => {
       if (!this.menuActive) return;
-      // Prevent duplicate handling
       const now = Date.now();
       if (now - this._lastInteraction < 400) return;
       this._lastInteraction = now;
       const touch = e.changedTouches[0];
       this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-      // Start music on first gesture
       if (!this.musicReady) {
         this.playMenuMusic();
         this.musicReady = true;
       }
       this.handleClick();
     });
-
-    // Pointerdown covers mouse and touch in modern browsers and is reliable for taps
-    window.addEventListener('pointerdown', (e) => {
-      if (!this.menuActive) return;
-      const now = Date.now();
-      if (now - this._lastInteraction < 400) return;
-      this._lastInteraction = now;
-      // Use client coords similar to click/touch handlers
-      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      if (!this.musicReady) {
-        this.playMenuMusic();
-        this.musicReady = true;
-      }
-      // Prevent default to avoid passive listener issues
-      if (e.cancelable) e.preventDefault();
-      this.handleClick();
-    }, { passive: false });
   }
 
   updateHover() {
