@@ -39,11 +39,12 @@ export class SpaceCat {
     this.spaceCat.renderOrder = 50;
   this.scene.add(this.spaceCat);
 
-  // Debug: show collision circle
+  // Debug: show collision circle (invisible)
   const thisCircleRadius = 0.13; // Slightly bigger for better fit
   const geometry = new THREE.CircleGeometry(thisCircleRadius, 32);
-  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0 });
   this.collisionCircle = new THREE.Mesh(geometry, material);
+  this.collisionCircle.visible = false;
   this.collisionCircle.position.set(this.spaceCatBasePos.x, this.spaceCatBasePos.y, 0.49);
   this.scene.add(this.collisionCircle);
     this.setupEventListeners();
