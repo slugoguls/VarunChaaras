@@ -15,6 +15,11 @@ import { setLoadingManager } from "./loadGLB.js";
 const loadingManager = new THREE.LoadingManager();
 const loadingScreen = document.getElementById('loading-screen');
 const loadingText = document.querySelector('.loading-text');
+const startPrompt = document.querySelector('.start-prompt');
+
+let assetsLoaded = false;
+let sceneReady = false;
+let userStarted = false;
 
 loadingManager.onProgress = (url, loaded, total) => {
   const progress = Math.round((loaded / total) * 100);
@@ -24,12 +29,51 @@ loadingManager.onProgress = (url, loaded, total) => {
 };
 
 loadingManager.onLoad = () => {
-  // All assets loaded, hide loading screen after a short delay
+  // All assets downloaded
+  assetsLoaded = true;
+  if (loadingText) {
+    loadingText.textContent = `Loading... 100%`;
+  }
+  // Show start prompt after a brief moment
   setTimeout(() => {
-    if (loadingScreen) {
-      loadingScreen.style.display = 'none';
+    if (loadingText) loadingText.style.display = 'none';
+    if (startPrompt) {
+      startPrompt.style.display = 'block';
+      // Add click/tap handlers
+      const startGame = (event) => {
+        if (!userStarted) {
+          userStarted = true;
+          // Prevent event from propagating to elements behind
+          event.stopPropagation();
+          event.preventDefault();
+          
+          // Start menu audio
+          if (menu && menu.menuAudio) {
+            menu.menuAudio.play().catch(err => {
+              // Silent fail if autoplay is blocked
+            });
+            menu.menuAudioStarted = true;
+          }
+          // Fade out loading screen
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+              // Remove the event listeners after hiding
+              startPrompt.removeEventListener('click', startGame);
+              startPrompt.removeEventListener('touchstart', startGame);
+              // Enable menu visibility after loading screen is fully hidden
+              if (menu) {
+                menu.menuVisible = true;
+              }
+            }, 800);
+          }
+        }
+      };
+      startPrompt.addEventListener('click', startGame);
+      startPrompt.addEventListener('touchstart', startGame, { passive: false });
     }
-  }, 100);
+  }, 500);
 };
 
 // Initialize all loaders with the loading manager
@@ -432,11 +476,20 @@ const clock = new THREE.Clock();
 function renderLoop() {
   const delta = clock.getDelta();
 
-  // Show menu or game
+  // Don't render anything until user has started
+  if (!userStarted) {
+    // Keep the canvas black
+    renderer.setClearColor(0x000000);
+    renderer.clear();
+    requestAnimationFrame(renderLoop);
+    return;
+  }
+
+  // Show menu or game (only render after user has started)
   if (!gameStarted) {
     menu.update(delta);
     menu.render(renderer);
-  } else {
+  } else if (gameStarted) {
     // Proximity glow for paintings
     const glowDistance = 3;
     paintings.forEach(painting => {

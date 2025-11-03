@@ -22,9 +22,14 @@ canvas.threejs {
     height: 100%;
     background-color: #000000;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.8s ease-out;
+    pointer-events: all;
+    cursor: default;
 }
 
 .loading-text {
@@ -32,6 +37,44 @@ canvas.threejs {
     font-family: 'Arial', sans-serif;
     font-size: 24px;
     letter-spacing: 2px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.start-prompt {
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-top: 40px;
+    cursor: pointer;
+    animation: pulse 1.5s ease-in-out infinite;
+    user-select: none;
+}
+
+.start-prompt:hover {
+    color: #ffcc00;
+}
+
+.desktop-prompt {
+    display: inline;
+}
+
+.mobile-prompt {
+    display: none;
+}
+
+@media (max-width: 768px), (hover: none) {
+    .desktop-prompt {
+        display: none;
+    }
+    .mobile-prompt {
+        display: inline;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 .modal {

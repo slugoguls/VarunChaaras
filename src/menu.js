@@ -13,6 +13,8 @@ export function setMenuLoadingManager(manager) {
 export class MenuScreen {
   constructor(onStart) {
     this.onStart = onStart;
+    this.interactionsEnabled = false; // Disable interactions initially
+    this.menuVisible = false; // Track if menu is actually visible to user
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
     const aspect = window.innerWidth / window.innerHeight;
@@ -88,6 +90,8 @@ export class MenuScreen {
     this.menuAudio.muted = false;
     this.menuAudioStarted = false;
     this.muteFrame = 0;
+    // Preload the audio
+    this.menuAudio.load();
     this.createBackground();
     this.createButtons();
     this.createMuteButton();
@@ -96,8 +100,17 @@ export class MenuScreen {
       if (this.spaceCat.collisionCircle) this.scene.remove(this.spaceCat.collisionCircle);
     }
     this.spaceCat = new SpaceCat(this.scene, this.camera);
+    
+    // Disable interactions initially
+    this.interactionsEnabled = false;
     this.setupEventListeners();
     this.handleResize(); // Ensure correct proportions on show
+    
+    // Enable interactions after fade-in completes (1 second to be safe)
+    setTimeout(() => {
+      this.interactionsEnabled = true;
+      this.selectedButton = null; // Clear any accidental selection
+    }, 1000);
   }
   createMuteButton() {
     this.muteTexture = textureLoader.load('Menu/MenuMute.png', () => {
@@ -274,7 +287,7 @@ export class MenuScreen {
     
     // Mouse move for hover effect
     window.addEventListener('mousemove', (e) => {
-      if (!this.menuActive) return;
+      if (!this.menuActive || !this.interactionsEnabled || !this.menuVisible) return;
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
       this.updateHover();
@@ -282,7 +295,7 @@ export class MenuScreen {
 
     // Click handler (only needed for music, not for menu visuals)
     window.addEventListener('click', (e) => {
-      if (!this.menuActive) return;
+      if (!this.menuActive || !this.interactionsEnabled || !this.menuVisible) return;
       const now = Date.now();
       if (now - this._lastInteraction < 400) return;
       this._lastInteraction = now;
@@ -297,7 +310,7 @@ export class MenuScreen {
 
     // Touch handler for mobile (only needed for music)
     window.addEventListener('touchend', (e) => {
-      if (!this.menuActive) return;
+      if (!this.menuActive || !this.interactionsEnabled || !this.menuVisible) return;
       const now = Date.now();
       if (now - this._lastInteraction < 400) return;
       this._lastInteraction = now;
