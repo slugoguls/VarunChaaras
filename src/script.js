@@ -601,6 +601,8 @@ function renderLoop() {
     }
     
     // Show E button for closest interaction
+    // Always reset canSwitchToTvCamera at the start of each frame
+    canSwitchToTvCamera = false;
     if (closestInteraction) {
       // Hide the E popup while the static TV camera is active so it doesn't float over the TV
       ui.eKeySprite.visible = !usingStaticCamera;
@@ -652,15 +654,14 @@ function renderLoop() {
         );
       }
       ui.updateAnimation(delta);
-      
-    // Set the appropriate flag
-    canSwitchToTvCamera = false;
-    if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
-    else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
-    // Only the computer interaction should open GitHub.
-    else if (closestInteraction.type === 'computer2') canInteractWithTable2 = true;
-    // If the decorative TV area is active, allow switching to the static TV camera
-    else if (closestInteraction.type === 'tableTV') canSwitchToTvCamera = true;
+
+      // Set the appropriate flag
+      if (closestInteraction.type === 'recordPlayer') canInteractWithRecordPlayer = true;
+      else if (closestInteraction.type === 'researchTable') canInteractWithResearchTable = true;
+      // Only the computer interaction should open GitHub.
+      else if (closestInteraction.type === 'computer2') canInteractWithTable2 = true;
+      // If the decorative TV area is active, allow switching to the static TV camera
+      else if (closestInteraction.type === 'tableTV') canSwitchToTvCamera = true;
     } else {
       ui.eKeySprite.visible = false;
     }
