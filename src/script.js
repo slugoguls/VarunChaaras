@@ -10,6 +10,7 @@ import { createUIElements } from "./uiElements.js";
 import { Joystick } from "./joystick.js";
 import { MenuScreen, setMenuLoadingManager } from "./menu.js";
 import { setLoadingManager } from "./loadGLB.js";
+import { Cutscene } from "./cutscene.js";
 
 // === LOADING MANAGER ===
 const loadingManager = new THREE.LoadingManager();
@@ -117,14 +118,23 @@ let canSwitchToTvCamera = false;
 
 // === MENU SCREEN ===
 let gameStarted = false;
+let cutscenePlaying = false;
+let cutscene = null;
 let joystick; // Declare here
 
 const menu = new MenuScreen(() => {
-  gameStarted = true;
-  // Enable joystick when game starts (it will show on touch)
-  if (joystick) {
-    joystick.enabled = true;
-  }
+  // Start cutscene instead of going directly to game
+  cutscenePlaying = true;
+  cutscene = new Cutscene(scene, camera, renderer, player);
+  cutscene.start(() => {
+    // After cutscene completes, start the game
+    gameStarted = true;
+    cutscenePlaying = false;
+    // Enable joystick when game starts (it will show on touch)
+    if (joystick) {
+      joystick.enabled = true;
+    }
+  });
 });
 
 // === AUDIO ===
@@ -481,6 +491,14 @@ function renderLoop() {
     // Keep the canvas black
     renderer.setClearColor(0x000000);
     renderer.clear();
+    requestAnimationFrame(renderLoop);
+    return;
+  }
+
+  // Handle cutscene
+  if (cutscenePlaying && cutscene) {
+    cutscene.update(delta);
+    renderer.render(scene, camera);
     requestAnimationFrame(renderLoop);
     return;
   }
