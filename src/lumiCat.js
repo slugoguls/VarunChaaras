@@ -50,7 +50,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     idle: { start: 0, end: 11 },
     sleep: { start: 12, end: 16 },
     walk: { start: 17, end: 23 },
-    attack: { start: 24, end: 25 },
+    attack: { start: 24, end: 27 },
   };
 
   let currentState = "walk";
@@ -60,6 +60,11 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   let walkTimer = 0;
   let attackCount = 0;
   const maxAttackPlays = 2;
+  
+  // Track attack cycles for player-triggered attacks
+  let _attackActive = false;
+  let _attackCycles = 0;
+  const maxPlayerAttackCycles = 1; // Reduced from 2 to 1 for shorter animation
 
   function changeState(newState) {
     if (currentState !== newState) {
@@ -72,6 +77,12 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
 
       if (newState === "attack") attackCount++;
     }
+  }
+  
+  function triggerPlayerAttack() {
+    _attackActive = true;
+    _attackCycles = 0;
+    changeState("attack");
   }
 
   function detectCollision(nextPos, playerSprite) {
@@ -155,9 +166,18 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
 
     // Attack handling
     if (currentState === "attack") {
-      if (frameTimer >= frameDuration * (states.attack.end - states.attack.start + 1)) {
-        if (attackCount >= maxAttackPlays) changeState("walk");
-        else frameTimer = 0;
+      if (_attackActive) {
+        // Player-triggered attack: play once through all frames then stop
+        if (currentFrame >= states.attack.end) {
+          _attackActive = false;
+          changeState("walk");
+        }
+      } else {
+        // AI-triggered attack
+        if (frameTimer >= frameDuration * (states.attack.end - states.attack.start + 1)) {
+          if (attackCount >= maxAttackPlays) changeState("walk");
+          else frameTimer = 0;
+        }
       }
     }
 
@@ -168,10 +188,17 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     if (frameTimer >= frameDuration) {
       frameTimer = 0;
       currentFrame++;
-      if (currentFrame > anim.end) currentFrame = anim.start;
+      if (currentFrame > anim.end) {
+        if (currentState === "attack" && _attackActive) {
+          // Don't loop for player-triggered attacks
+          currentFrame = anim.end;
+        } else {
+          currentFrame = anim.start;
+        }
+      }
       setFrame(texture, currentFrame, framesHoriz, framesVert);
     }
   }
 
-  return { cat, update, collisionBoxMesh, collisionBox };
+  return { cat, update, collisionBoxMesh, collisionBox, triggerPlayerAttack, get isAttacking() { return _attackActive; } };
 }

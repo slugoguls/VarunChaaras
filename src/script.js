@@ -279,10 +279,16 @@ function toggleFullscreen() {
 let canInteractWithRecordPlayer = false;
 let canInteractWithResearchTable = false;
 let canInteractWithTable2 = false;
+let canInteractWithCat = false;
 
 // Handle interactions (keyboard for desktop)
 window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "f") toggleFullscreen();
+  
+  // Cat interaction
+  if (e.key.toLowerCase() === "e" && canInteractWithCat && lumi) {
+    lumi.triggerPlayerAttack();
+  }
   
   // Record player interaction
   if (e.key.toLowerCase() === "e" && canInteractWithRecordPlayer) {
@@ -346,6 +352,11 @@ window.addEventListener("touchend", (e) => {
     }
 
     // If sprite was tapped, run the same interaction mapping as keyboard E
+    if (canInteractWithCat && lumi) {
+      lumi.triggerPlayerAttack();
+      return;
+    }
+    
     if (canInteractWithRecordPlayer) {
       if (isPlaying) {
         sound.pause();
@@ -470,9 +481,26 @@ function renderLoop() {
     canInteractWithRecordPlayer = false;
     canInteractWithResearchTable = false;
     canInteractWithTable2 = false;
+    canInteractWithCat = false;
     
     let closestInteraction = null;
     let closestDistance = Infinity;
+    
+    // Check cat proximity
+    if (lumi && lumi.cat && player && player.sprite) {
+      const dx = player.sprite.position.x - lumi.cat.position.x;
+      const dz = player.sprite.position.z - lumi.cat.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      // Only show E if cat is not currently attacking from player interaction
+      if (distance < 1.5 && distance < closestDistance && !lumi.isAttacking) {
+        closestDistance = distance;
+        closestInteraction = {
+          type: 'cat',
+          position: lumi.cat.position,
+          yOffset: 1.0
+        };
+      }
+    }
     
     // Check record player
     if (recordPlayer) {
@@ -606,9 +634,17 @@ function renderLoop() {
     if (closestInteraction) {
       // Hide the E popup while the static TV camera is active so it doesn't float over the TV
       ui.eKeySprite.visible = !usingStaticCamera;
-      // If this is the table2 interaction (opens GitHub), pin the E popup to a hardcoded location
-      // so it reliably appears above the table that opens GitHub.
-      if (closestInteraction.type === 'table2') {
+      
+      if (closestInteraction.type === 'cat') {
+        // Place E above the cat, make it smaller
+        ui.eKeySprite.position.set(
+          closestInteraction.position.x,
+          closestInteraction.position.y + closestInteraction.yOffset,
+          closestInteraction.position.z
+        );
+        ui.eKeySprite.scale.set(0.4, 0.5, 1); // Smaller E for the cat
+        canInteractWithCat = true;
+      } else if (closestInteraction.type === 'table2') {
         // Hardcoded position above the retro TV so this E appears over the TV
         // Retro TV is placed around (-1, -8.5, -4.2) in objectLoader; raise Y slightly
         ui.eKeySprite.position.set(-1, -7.5, -4.2);
@@ -652,6 +688,7 @@ function renderLoop() {
           closestInteraction.position.y + closestInteraction.yOffset,
           closestInteraction.position.z
         );
+        ui.eKeySprite.scale.set(0.55, 0.7, 1); // Default size for other objects
       }
       ui.updateAnimation(delta);
 
@@ -662,6 +699,8 @@ function renderLoop() {
       else if (closestInteraction.type === 'computer2') canInteractWithTable2 = true;
       // If the decorative TV area is active, allow switching to the static TV camera
       else if (closestInteraction.type === 'tableTV') canSwitchToTvCamera = true;
+      // Cat interaction already set above
+
     } else {
       ui.eKeySprite.visible = false;
     }
