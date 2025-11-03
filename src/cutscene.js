@@ -24,7 +24,7 @@ export class Cutscene {
     this.steps = [
       {
         dialogue: "Hey, wasn't expecting any visitors here but since you came, I'll show you around.",
-        cameraPosition: { x: 0, y: -4, z: 5 },
+        cameraPosition: { x: 0, y: -4, z: 6 },
         cameraLookAt: { x: 0, y: -9, z: 0 },
         spotlightTarget: { x: 0, y: -9, z: 0 },
         spotlightIntensity: 150
@@ -38,31 +38,31 @@ export class Cutscene {
       },
       {
         dialogue: "This is my research table where I study and work on projects.",
-        cameraPosition: { x: -2, y: -6, z: -6 },
-        cameraLookAt: { x: -2.75, y: -10, z: -9.25 },
+        cameraPosition: { x: -5, y: -7, z: -4 },
+        cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
         spotlightTarget: { x: -2.75, y: -10, z: -9.25 },
         spotlightIntensity: 100
       },
       {
         dialogue: "Check out this retro TV! Press E to get a closer look at what's playing.",
-        cameraPosition: { x: -1, y: -6, z: -1 },
+        cameraPosition: { x: -1, y: -5.5, z: -1 },
         cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
         spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
         spotlightIntensity: 80
       },
       {
         dialogue: "My computer setup - press E here to check out my GitHub projects.",
-        cameraPosition: { x: 2, y: -6, z: -2 },
+        cameraPosition: { x: 2, y: -5.5, z: -1 },
         cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightIntensity: 100
       },
       {
         dialogue: "These paintings on the walls are some of my favorite pieces. Click on them to see them up close!",
-        cameraPosition: { x: 6, y: -5, z: -5 },
+        cameraPosition: { x: 3, y: -5, z: -3 },
         cameraLookAt: { x: 9.5, y: -7, z: -7 },
         spotlightTarget: { x: 9.5, y: -7, z: -7 },
-        spotlightIntensity: 90
+        spotlightIntensity: 150
       },
       {
         dialogue: "And this is Lumi, my cat! She loves visitors. Press E to pet her and see what happens.",
@@ -120,8 +120,8 @@ export class Cutscene {
   }
 
   createSpotlight() {
-    // Bright spotlight from above - smaller cone angle (PI/6 instead of PI/4)
-    this.spotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 6, 0.5, 2);
+    // Bright spotlight from above - smaller cone angle for tighter radius
+    this.spotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 8, 0.5, 2);
     this.spotlight.position.set(0, 10, 0);
     this.spotlight.castShadow = true;
     this.spotlight.shadow.mapSize.width = 1024;
@@ -129,9 +129,12 @@ export class Cutscene {
     this.scene.add(this.spotlight);
     this.scene.add(this.spotlight.target);
 
-    // Add ambient light for base visibility
-    this.ambientLight = new THREE.AmbientLight(0x404040, 1.5);
-    this.scene.add(this.ambientLight);
+    // No ambient light - everything outside spotlight is pitch black
+    
+    // Add a front-facing point light to illuminate the player during cutscene
+    this.playerLight = new THREE.PointLight(0xffffff, 2, 10);
+    this.playerLight.position.set(0, -8, 5); // In front of player
+    this.scene.add(this.playerLight);
   }
 
   start(onComplete) {
@@ -152,13 +155,15 @@ export class Cutscene {
       this.player.lastDirection = "Front";
       this.player.currentAnim = this.player.animations.idleFront;
       this.player.isMoving = false;
+      this.player.frameIndex = 0; // Set to first frame of idle animation
+      this.player.animTimer = 0; // Reset animation timer
     }
     
-    // Dim all existing lights to 10%
+    // Dim all existing lights to 0 (turn them off completely)
     this.scene.traverse((child) => {
-      if (child.isLight && child !== this.spotlight && child !== this.ambientLight) {
+      if (child.isLight && child !== this.spotlight && child !== this.playerLight) {
         child.userData.originalIntensity = child.intensity;
-        child.intensity = child.intensity * 0.1;
+        child.intensity = 0;
       }
     });
     
@@ -243,9 +248,17 @@ export class Cutscene {
   update(delta) {
     if (!this.isPlaying) return;
     
-    // Keep playing idle animation during cutscene
-    if (this.player) {
-      this.player.update(delta);
+    // Keep player on first sprite frame (frame 0 - top left of sprite sheet)
+    if (this.player && this.player.sprite && this.player.sprite.material.map) {
+      const frame = 0; // First frame in the sprite sheet
+      const framesHoriz = this.player.framesHoriz; // 4
+      const framesVert = this.player.framesVert; // 10
+      
+      const column = frame % framesHoriz;
+      const row = Math.floor(frame / framesHoriz);
+      
+      this.player.sprite.material.map.offset.x = column / framesHoriz;
+      this.player.sprite.material.map.offset.y = 1 - (row + 1) / framesVert;
     }
   }
 
@@ -264,14 +277,14 @@ export class Cutscene {
     setTimeout(() => {
       // Restore lights
       this.scene.traverse((child) => {
-        if (child.isLight && child !== this.spotlight && child !== this.ambientLight) {
+        if (child.isLight && child !== this.spotlight && child !== this.playerLight) {
           child.intensity = child.userData.originalIntensity || 0;
         }
       });
 
       // Remove cutscene lights
       this.spotlight.intensity = 0;
-      this.scene.remove(this.ambientLight);
+      this.scene.remove(this.playerLight);
 
       // Fade back in to game
       this.fadeElement.style.opacity = '0';
@@ -295,8 +308,8 @@ export class Cutscene {
       this.scene.remove(this.spotlight);
       this.scene.remove(this.spotlight.target);
     }
-    if (this.ambientLight) {
-      this.scene.remove(this.ambientLight);
+    if (this.playerLight) {
+      this.scene.remove(this.playerLight);
     }
   }
 }
