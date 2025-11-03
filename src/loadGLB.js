@@ -2,13 +2,19 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
-// Shared loaders for caching
-const gltfLoader = new GLTFLoader();
+// Shared loaders for caching (will be updated with loading manager)
+let gltfLoader = new GLTFLoader();
 const dracoLoader = new DRACOLoader();
 
 // Optional: If you use Draco-compressed assets
 dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
 gltfLoader.setDRACOLoader(dracoLoader);
+
+// Function to set loading manager
+export function setLoadingManager(manager) {
+  gltfLoader = new GLTFLoader(manager);
+  gltfLoader.setDRACOLoader(dracoLoader);
+}
 
 /**
  * Load a .glb or .gltf model with optional bounding box collider

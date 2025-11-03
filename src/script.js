@@ -1,14 +1,43 @@
 import * as THREE from "three";
-import { createRoom } from "./room.js";
+import { createRoom, setRoomTextureLoadingManager } from "./room.js";
 import { createCamera } from "./camera.js";
 import { Player } from "./player.js";
 import { loadAllObjects, allObjects } from "./objectLoader.js";
-import { loadAllPaintings } from "./paintingLoader.js";
+import { loadAllPaintings, setPaintingLoadingManager } from "./paintingLoader.js";
 import { createLumiCat } from "./lumiCat.js";
-import { setFrame } from "./spriteLoader.js";
+import { setFrame, setTextureLoadingManager } from "./spriteLoader.js";
 import { createUIElements } from "./uiElements.js";
 import { Joystick } from "./joystick.js";
-import { MenuScreen } from "./menu.js";
+import { MenuScreen, setMenuLoadingManager } from "./menu.js";
+import { setLoadingManager } from "./loadGLB.js";
+
+// === LOADING MANAGER ===
+const loadingManager = new THREE.LoadingManager();
+const loadingScreen = document.getElementById('loading-screen');
+const loadingText = document.querySelector('.loading-text');
+
+loadingManager.onProgress = (url, loaded, total) => {
+  const progress = Math.round((loaded / total) * 100);
+  if (loadingText) {
+    loadingText.textContent = `Loading... ${progress}%`;
+  }
+};
+
+loadingManager.onLoad = () => {
+  // All assets loaded, hide loading screen after a short delay
+  setTimeout(() => {
+    if (loadingScreen) {
+      loadingScreen.style.display = 'none';
+    }
+  }, 100);
+};
+
+// Initialize all loaders with the loading manager
+setLoadingManager(loadingManager);
+setTextureLoadingManager(loadingManager);
+setRoomTextureLoadingManager(loadingManager);
+setPaintingLoadingManager(loadingManager);
+setMenuLoadingManager(loadingManager);
 
 let lumi;
 const colliders = [];
@@ -54,11 +83,9 @@ const menu = new MenuScreen(() => {
   }
 });
 
-// Loading screen is now hidden by menu.js after assets load
-
 // === AUDIO ===
 const sound = new THREE.PositionalAudio(listener);
-const audioLoader = new THREE.AudioLoader();
+const audioLoader = new THREE.AudioLoader(loadingManager);
 let isPlaying = false;
 
 audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {

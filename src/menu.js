@@ -1,36 +1,41 @@
 import * as THREE from 'three';
 import { SpaceCat } from './spaceCat.js';
 
+// Store loading manager reference
+let textureLoader = new THREE.TextureLoader();
+let audioLoader = null;
+
+// Function to set loading manager
+export function setMenuLoadingManager(manager) {
+  textureLoader = new THREE.TextureLoader(manager);
+}
+
 export class MenuScreen {
   constructor(onStart) {
     this.onStart = onStart;
-  // Show the main loading screen (already present in index.html)
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
     const aspect = window.innerWidth / window.innerHeight;
     this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
     this.camera.position.z = 1;
 
-    // Asset loading counter
+    // Asset loading counter - now just tracks menu readiness
     this._assetsLoaded = 0;
     this._assetsToLoad = 11; // msg textures (4), bg, buttons (6), mute
     const onAssetLoaded = () => {
       this._assetsLoaded++;
       if (this._assetsLoaded >= this._assetsToLoad) {
-        // Hide the main loading screen and show menu
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) loadingScreen.style.display = 'none';
+        // Menu assets ready, show menu (loading screen will be hidden by main loading manager)
         this._showMenu();
       }
     };
 
     // Message images
-    const loader = new THREE.TextureLoader();
     this.msgTextures = {
-      nothing: loader.load('Menu/b1.png', onAssetLoaded),
-      start: loader.load('Menu/startmsg.png', onAssetLoaded),
-      resume: loader.load('Menu/resumemsg.png', onAssetLoaded),
-      settings: loader.load('Menu/settings.png', onAssetLoaded),
+      nothing: textureLoader.load('Menu/b1.png', onAssetLoaded),
+      start: textureLoader.load('Menu/startmsg.png', onAssetLoaded),
+      resume: textureLoader.load('Menu/resumemsg.png', onAssetLoaded),
+      settings: textureLoader.load('Menu/settings.png', onAssetLoaded),
     };
     Object.values(this.msgTextures).forEach(tex => {
       tex.minFilter = THREE.NearestFilter;
@@ -38,16 +43,16 @@ export class MenuScreen {
       tex.colorSpace = THREE.SRGBColorSpace;
     });
     // Background
-    loader.load('Menu/menuSheet.png', onAssetLoaded);
+    textureLoader.load('Menu/menuSheet.png', onAssetLoaded);
     // Buttons
-    loader.load('Menu/Start.png', onAssetLoaded);
-    loader.load('Menu/StartHover.png', onAssetLoaded);
-    loader.load('Menu/resume.png', onAssetLoaded);
-    loader.load('Menu/resumeHover.png', onAssetLoaded);
-    loader.load('Menu/Setting.png', onAssetLoaded);
-    loader.load('Menu/SettingsHover.png', onAssetLoaded);
+    textureLoader.load('Menu/Start.png', onAssetLoaded);
+    textureLoader.load('Menu/StartHover.png', onAssetLoaded);
+    textureLoader.load('Menu/resume.png', onAssetLoaded);
+    textureLoader.load('Menu/resumeHover.png', onAssetLoaded);
+    textureLoader.load('Menu/Setting.png', onAssetLoaded);
+    textureLoader.load('Menu/SettingsHover.png', onAssetLoaded);
     // Mute
-    loader.load('Menu/MenuMute.png', onAssetLoaded);
+    textureLoader.load('Menu/MenuMute.png', onAssetLoaded);
     // SpaceCat is created after assets load
     // Do not auto-play music; wait for user gesture
     this.musicReady = false;
@@ -95,8 +100,7 @@ export class MenuScreen {
     this.handleResize(); // Ensure correct proportions on show
   }
   createMuteButton() {
-    const textureLoader = new THREE.TextureLoader();
-  this.muteTexture = textureLoader.load('Menu/MenuMute.png', () => {
+    this.muteTexture = textureLoader.load('Menu/MenuMute.png', () => {
       // Force update after texture loads
       this.setMuteFrame(this.muteFrame);
     });
@@ -143,7 +147,6 @@ export class MenuScreen {
   }
   
   createBackground() {
-    const textureLoader = new THREE.TextureLoader();
     const bgTexture = textureLoader.load('Menu/menuSheet.png');
     bgTexture.minFilter = THREE.NearestFilter;
     bgTexture.magFilter = THREE.NearestFilter;
@@ -190,8 +193,6 @@ export class MenuScreen {
   }
   
   createButtons() {
-    const textureLoader = new THREE.TextureLoader();
-    
     // Start button
     this.startTexture = textureLoader.load('Menu/Start.png');
     this.startTexture.colorSpace = THREE.SRGBColorSpace;

@@ -2,8 +2,6 @@ import * as THREE from 'three';
 import { loadSpriteSheet, setFrame } from './spriteLoader.js';
 
 export function createUIElements(scene) {
-    const textureLoader = new THREE.TextureLoader();
-    
     // Detect if device is mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                      ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);

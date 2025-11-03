@@ -1,14 +1,21 @@
 import * as THREE from "three";
 
+// Store loading manager reference
+let textureLoader = new THREE.TextureLoader();
+
+// Function to set loading manager
+export function setRoomTextureLoadingManager(manager) {
+  textureLoader = new THREE.TextureLoader(manager);
+}
+
 export function createRoom(size = 10, color = 0xF5F5DC, useBox = true) {
   const roomGroup = new THREE.Group();
-  const loader = new THREE.TextureLoader();
 
   // Floor texture (only base map)
-  const floorBase = loader.load("textures/floor/base.png");
+  const floorBase = textureLoader.load("textures/floor/base.png");
 
   // Wall texture (only base map)
-  const wallBase = loader.load("textures/wall/base.png");
+  const wallBase = textureLoader.load("textures/wall/base.png");
 
   // Different repeat factors
   const floorRepeat = size / 3; // denser tiling for floor

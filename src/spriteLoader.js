@@ -1,12 +1,19 @@
 // spriteLoader.js
 import * as THREE from "three";
 
+// Store loading manager reference
+let textureLoader = new THREE.TextureLoader();
+
+// Function to set loading manager
+export function setTextureLoadingManager(manager) {
+  textureLoader = new THREE.TextureLoader(manager);
+}
+
 /**
  * Loads a sprite sheet and sets up repeat/wrapping.
  */
 export function loadSpriteSheet(path, framesHoriz, framesVert, onLoad) {
-  const loader = new THREE.TextureLoader();
-  const texture = loader.load(
+  const texture = textureLoader.load(
     path,
     () => onLoad && onLoad()
   );

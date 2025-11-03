@@ -1,12 +1,18 @@
 import * as THREE from "three";
 
-export async function loadAllPaintings(scene, paintings, onProgress = null) {
-  const loader = new THREE.TextureLoader();
+// Store loading manager reference
+let textureLoader = new THREE.TextureLoader();
 
+// Function to set loading manager
+export function setPaintingLoadingManager(manager) {
+  textureLoader = new THREE.TextureLoader(manager);
+}
+
+export async function loadAllPaintings(scene, paintings, onProgress = null) {
   // Helper to load a texture with chosen filtering + correct aspect ratio
   const loadPainting = (file, position, scale = 1, rotation = null) => {
   return new Promise((resolve, reject) => {
-    loader.load(
+    textureLoader.load(
       `paintings/${file}`,
       (texture) => {
         texture.minFilter = THREE.NearestFilter;
