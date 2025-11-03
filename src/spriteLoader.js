@@ -8,9 +8,7 @@ export function loadSpriteSheet(path, framesHoriz, framesVert, onLoad) {
   const loader = new THREE.TextureLoader();
   const texture = loader.load(
     path,
-    () => onLoad && onLoad(),
-    undefined,
-    (err) => console.error(`❌ Failed to load sprite ${path}`, err)
+    () => onLoad && onLoad()
   );
 
   texture.wrapS = THREE.RepeatWrapping;

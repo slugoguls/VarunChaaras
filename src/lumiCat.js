@@ -6,13 +6,11 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   const spritePath = "Char/LumiCat-Sheet.png";
   const framesHoriz = 6;
   const framesVert = 5;
-  const frameDuration = 0.15; // Time in seconds per frame (was 0.12)
-  const speed = 1.0; // Units per second (was 0.01 per frame)
+  const frameDuration = 0.15;
+  const speed = 1.0;
 
-  // Load texture
+  // Load texture and create material
   const texture = loadSpriteSheet(spritePath, framesHoriz, framesVert);
-
-  // Material with emissive glow only
   const material = new THREE.MeshStandardMaterial({
     map: texture,
     transparent: true,
@@ -23,27 +21,19 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     emissiveMap: texture
   });
 
+  // Create cat sprite
   const geometry = new THREE.PlaneGeometry((36 / 64) * 2, 2);
   const cat = new THREE.Mesh(geometry, material);
   cat.position.set(-5, -9.3, -5);
   scene.add(cat);
 
-  // --- CUSTOM COLLISION BOX ---
-  const boxHeight = 1.2;
-  const boxYOffset = 0;
-  const collisionGeometry = new THREE.BoxGeometry(1, boxHeight, 1);
-  const collisionMaterial = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false
-  });
-  const collisionBoxMesh = new THREE.Mesh(collisionGeometry, collisionMaterial);
-  collisionBoxMesh.position.set(cat.position.x, cat.position.y + boxYOffset, cat.position.z);
+  // Collision box
+  const collisionBoxMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1.2, 1),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  collisionBoxMesh.position.copy(cat.position);
   scene.add(collisionBoxMesh);
-
-  const collisionBox = new THREE.Box3Helper(new THREE.Box3().setFromObject(collisionBoxMesh), 0xff00ff);
-  collisionBox.visible = false;
-  scene.add(collisionBox);
 
   // Animation states
   const states = {
@@ -53,35 +43,28 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     attack: { start: 24, end: 27 },
   };
 
+  // State variables
   let currentState = "walk";
   let currentFrame = states[currentState].start;
   let frameTimer = 0;
   let direction = -1;
   let walkTimer = 0;
+  let walkAxis = 'x';
   let attackCount = 0;
-  const maxAttackPlays = 2;
-  
-  // Track attack cycles for player-triggered attacks
   let _attackActive = false;
-  let _attackCycles = 0;
-  const maxPlayerAttackCycles = 1; // Reduced from 2 to 1 for shorter animation
 
   function changeState(newState) {
     if (currentState !== newState) {
       currentState = newState;
       currentFrame = states[newState].start;
       frameTimer = 0;
-
-      material.emissiveIntensity = newState === "sleep" ? 0.2 : 0;
-      material.emissiveIntensity = newState === "attack" ? 1.1 : 0.2;
-
+      material.emissiveIntensity = newState === "attack" ? 1.1 : (newState === "sleep" ? 0.2 : 0);
       if (newState === "attack") attackCount++;
     }
   }
   
   function triggerPlayerAttack() {
     _attackActive = true;
-    _attackCycles = 0;
     changeState("attack");
   }
 
@@ -90,47 +73,44 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     const delta = new THREE.Vector3(nextPos.x - cat.position.x, 0, nextPos.z - cat.position.z);
     proposedBox.translate(delta);
 
-    // Check against room boundaries
+    // Check room boundaries
     if (roomBoundary) {
-      if (
-        proposedBox.min.x < roomBoundary.minX ||
-        proposedBox.max.x > roomBoundary.maxX ||
-        proposedBox.min.z < roomBoundary.minZ ||
-        proposedBox.max.z > roomBoundary.maxZ
-      ) return "wall";
+      if (proposedBox.min.x < roomBoundary.minX || proposedBox.max.x > roomBoundary.maxX ||
+          proposedBox.min.z < roomBoundary.minZ || proposedBox.max.z > roomBoundary.maxZ) {
+        return "wall";
+      }
     }
 
-    // Check against colliders
+    // Check colliders
     for (const { model } of colliders) {
-      if (!model) continue;
-      const objBox = new THREE.Box3().setFromObject(model);
-      if (proposedBox.intersectsBox(objBox)) return "object";
+      if (model && new THREE.Box3().setFromObject(model).intersectsBox(proposedBox)) {
+        return "object";
+      }
     }
 
     // Check player
-    if (playerSprite) {
-      const playerBox = new THREE.Box3().setFromObject(playerSprite);
-      if (proposedBox.intersectsBox(playerBox)) return "player";
+    if (playerSprite && new THREE.Box3().setFromObject(playerSprite).intersectsBox(proposedBox)) {
+      return "player";
     }
 
     return null;
   }
 
-  let walkAxis = 'x';
-
   function updateBehavior(delta) {
+    if (currentState === "attack") return;
+    
     walkTimer -= delta;
-    if (walkTimer <= 0 && currentState !== "attack") {
+    if (walkTimer <= 0) {
       const rand = Math.random();
-      if (rand < 0.25) changeState("sleep");
-      else if (rand < 0.55) changeState("idle");
-      else {
+      if (rand < 0.25) {
+        changeState("sleep");
+      } else if (rand < 0.55) {
+        changeState("idle");
+      } else {
         changeState("walk");
         direction = Math.random() > 0.5 ? 1 : -1;
-        walkAxis = Math.random() > 0.3 ? 'x' : 'z'; // Randomly choose axis
-        if (walkAxis === 'x') {
-          cat.scale.x = -Math.abs(cat.scale.x) * direction;
-        }
+        walkAxis = Math.random() > 0.3 ? 'x' : 'z';
+        if (walkAxis === 'x') cat.scale.x = -Math.abs(cat.scale.x) * direction;
       }
       walkTimer = 3 + Math.random() * 5;
     }
@@ -140,65 +120,50 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     frameTimer += delta;
     updateBehavior(delta);
 
+    // Handle movement
     if (currentState === "walk") {
-      let nextPos;
+      const nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z);
       if (walkAxis === 'x') {
-        nextPos = new THREE.Vector3(cat.position.x + speed * direction * delta, cat.position.y, cat.position.z);
-      } else { // walkAxis === 'z'
-        nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z + speed * direction * delta);
+        nextPos.x += speed * direction * delta;
+      } else {
+        nextPos.z += speed * direction * delta;
       }
+      
       const collisionType = detectCollision(nextPos, playerSprite);
-
       if (collisionType === "object" || collisionType === "wall") {
         direction *= -1;
-        if (walkAxis === 'x') {
-          cat.scale.x = Math.abs(cat.scale.x) * direction;
-        }
+        if (walkAxis === 'x') cat.scale.x = Math.abs(cat.scale.x) * direction;
         changeState("idle");
       } else if (collisionType === "player" && currentState === "sleep") {
-        if (attackCount < maxAttackPlays) changeState("attack");
+        if (attackCount < 2) changeState("attack");
       } else {
         cat.position.copy(nextPos);
       }
-
       collisionBoxMesh.position.copy(cat.position);
     }
 
-    // Attack handling
-    if (currentState === "attack") {
-      if (_attackActive) {
-        // Player-triggered attack: play once through all frames then stop
-        if (currentFrame >= states.attack.end) {
-          _attackActive = false;
-          changeState("walk");
-        }
-      } else {
-        // AI-triggered attack
-        if (frameTimer >= frameDuration * (states.attack.end - states.attack.start + 1)) {
-          if (attackCount >= maxAttackPlays) changeState("walk");
-          else frameTimer = 0;
-        }
-      }
+    // Handle attack state
+    if (currentState === "attack" && _attackActive && currentFrame >= states.attack.end) {
+      _attackActive = false;
+      changeState("walk");
     }
 
-    collisionBox.box.setFromObject(collisionBoxMesh);
-
-    // Animate sprite
-    const anim = states[currentState];
+    // Animate sprite frames
     if (frameTimer >= frameDuration) {
       frameTimer = 0;
       currentFrame++;
-      if (currentFrame > anim.end) {
-        if (currentState === "attack" && _attackActive) {
-          // Don't loop for player-triggered attacks
-          currentFrame = anim.end;
-        } else {
-          currentFrame = anim.start;
-        }
+      if (currentFrame > states[currentState].end) {
+        currentFrame = (currentState === "attack" && _attackActive) ? states.attack.end : states[currentState].start;
       }
       setFrame(texture, currentFrame, framesHoriz, framesVert);
     }
   }
 
-  return { cat, update, collisionBoxMesh, collisionBox, triggerPlayerAttack, get isAttacking() { return _attackActive; } };
+  return { 
+    cat, 
+    update, 
+    collisionBoxMesh, 
+    triggerPlayerAttack, 
+    get isAttacking() { return _attackActive; } 
+  };
 }

@@ -90,6 +90,5 @@ const paintingsData = [
     )
   );
 
-  console.log("✅ All paintings loaded successfully");
   return results;
 }

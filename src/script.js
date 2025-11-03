@@ -92,31 +92,27 @@ audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {
 
 // === LIGHTING ===
 scene.add(new THREE.AmbientLight(0xFFE5B4, 0.05));
+
 const pointLight = new THREE.PointLight(0xFFD966, 25);
 pointLight.position.set(-8, -6.5, 0);
-pointLight.distance = 20
-pointLight.decay = 1.5
-// pointLight.rotateY = Math.PI
+pointLight.distance = 20;
+pointLight.decay = 1.5;
 pointLight.castShadow = true;
 scene.add(pointLight);
 
-
 const pointLight2 = new THREE.PointLight(0xFFD966, 35);
 pointLight2.position.set(7, -4.5, -5);
-pointLight2.distance = 8
-pointLight2.decay = 1
+pointLight2.distance = 8;
+pointLight2.decay = 1;
 pointLight2.castShadow = true;
 scene.add(pointLight2);
 
 const pointLight3 = new THREE.PointLight(0xFFD966, 15);
 pointLight3.position.set(5.5, -8.25, 0.5);
-pointLight3.distance = 7.5
-pointLight3.decay = 2
+pointLight3.distance = 7.5;
+pointLight3.decay = 2;
 pointLight3.castShadow = true;
 scene.add(pointLight3);
-
-
-
 
 // === ROOM ===
 const room = createRoom(roomSize, 0xF5F5DC, true);
@@ -127,32 +123,12 @@ await loadAllObjects(scene, colliders);
 
 const ui = createUIElements(scene);
 const recordPlayer = allObjects["Models/record_player.glb"];
-if (recordPlayer) {
-  try { recordPlayer.add(sound); } catch (e) { console.warn('recordPlayer not ready to add sound yet'); }
-}
+if (recordPlayer) recordPlayer.add(sound);
 
 const researchTable = allObjects["Models/research_table.glb"];
 const table2 = allObjects["Models/table2.glb"];
 const computer2 = allObjects["Models/computer2.glb"];
 const table3 = allObjects["Models/Table3.glb"];
-
-console.log("Record Player:", recordPlayer ? "✅ Loaded" : "❌ Not found");
-console.log("Research Table:", researchTable ? "✅ Loaded" : "❌ Not found");
-console.log("Table2:", table2 ? "✅ Loaded" : "❌ Not found");
-
-if (recordPlayer) {
-  console.log("Record Player Position:", 
-    `x: ${recordPlayer.position.x}, y: ${recordPlayer.position.y}, z: ${recordPlayer.position.z}`);
-}
-if (researchTable) {
-  console.log("Research Table Position:", 
-    `x: ${researchTable.position.x}, y: ${researchTable.position.y}, z: ${researchTable.position.z}`);
-}
-if (table2) {
-  console.log("Table2 Position:", 
-    `x: ${table2.position.x}, y: ${table2.position.y}, z: ${table2.position.z}`);
-}
-
 
 // === PAINTINGS ===
 const paintings = [];
@@ -219,6 +195,10 @@ if (tvModel) {
 const modal = document.getElementById("painting-modal");
 const modalImg = document.getElementById("painting-img");
 const closeBtn = document.querySelector(".close");
+
+// Cache bounding boxes for performance (avoid recalculating every frame)
+const tvModelBounds = tvModel ? new THREE.Box3().setFromObject(tvModel) : null;
+const computer2Bounds = computer2 ? new THREE.Box3().setFromObject(computer2) : null;
 
 closeBtn.addEventListener("click", () => {
   modal.style.display = "none";
@@ -387,66 +367,36 @@ window.addEventListener("touchend", (e) => {
   }
 });
 
-// === COLLISION CHECK (DEBUG) ===
-function checkCollisions(playerObject) {
-  const playerBox = new THREE.Box3().setFromObject(playerObject);
-  for (const { model } of colliders) {
-    const objectBox = new THREE.Box3().setFromObject(model);
-    if (playerBox.intersectsBox(objectBox)) {
-      console.log("Collision with:", model.name || "Unnamed object");
-    }
-  }
-}
-
 // === LUMI CAT ===
 lumi = await createLumiCat(scene, colliders, boundary);
 
-// === DEBUG INTERACTION AREAS ===
-// Set to true to visualize activation areas (spheres will be added for interactable objects)
-const debugInteractions = true;
+// === TABLE3 INTERACTION ZONES ===
+if (table3) {
+  const tableTopWidth = 2.5;
+  const tableTopDepth = 4.5;
+  const halfWidth = tableTopWidth / 2;
+  const halfOffset = halfWidth / 2;
+  const tableTopY = table3.position.y + 2.0;
 
-console.log("Player Y position:", player.sprite.position.y);
-
-if (debugInteractions) {
-  // Record player debug sphere - at player's Y level for visibility
-  const table2 = allObjects["Models/table2.glb"];
-  const table3 = allObjects["Models/Table3.glb"];
-  const computer2 = allObjects["Models/computer2.glb"];
-
-  // (debug spheres removed; using rectangular halves on Table3 as activation zones)
-
-  // If we have Table3, draw two rectangular halves on the table top: left=retro TV, right=computer
-  if (table3) {
-    // Table3 collider used a top width of ~2.5 and depth ~4.5 in objectLoader.js
-    const tableTopWidth = 2.5;
-    const tableTopDepth = 4.5;
-    const halfWidth = tableTopWidth / 2; // 1.25
-    const halfOffset = halfWidth / 2; // center offset for halves = 0.625
-    const tableTopY = table3.position.y + 2.0; // matches custom collider's lifted Y
-
-    // Left half (retro TV)
-    const leftGeom = new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth);
-    const leftMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.35 });
-    const leftRect = new THREE.Mesh(leftGeom, leftMat);
-  // move left rect slightly further left and a bit up to align with the retro TV
+  // Left half (retro TV)
+  const leftRect = new THREE.Mesh(
+    new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+  );
   leftRect.position.set(table3.position.x - halfOffset - 0.4, tableTopY + 0.06, table3.position.z);
-    leftRect.rotation.set(0, 0, 0);
-    leftRect.name = 'table3-left-zone';
-    leftRect.renderOrder = 200;
-  leftRect.visible = false; // keep as activation collider but hide visually
+  leftRect.name = 'table3-left-zone';
+  leftRect.visible = false;
   scene.add(leftRect);
 
-    // Right half (computer)
-    const rightGeom = new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth);
-    const rightMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.35 });
-    const rightRect = new THREE.Mesh(rightGeom, rightMat);
-    rightRect.position.set(table3.position.x + halfOffset, tableTopY + 0.01, table3.position.z);
-    rightRect.rotation.set(0, 0, 0);
-    rightRect.name = 'table3-right-zone';
-    rightRect.renderOrder = 200;
-    rightRect.visible = false; // hide visual rectangle
-    scene.add(rightRect);
-  }
+  // Right half (computer)
+  const rightRect = new THREE.Mesh(
+    new THREE.BoxGeometry(halfWidth, 0.02, tableTopDepth),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+  );
+  rightRect.position.set(table3.position.x + halfOffset, tableTopY + 0.01, table3.position.z);
+  rightRect.name = 'table3-right-zone';
+  rightRect.visible = false;
+  scene.add(rightRect);
 }
 
 // === RENDER LOOP ===
@@ -521,19 +471,13 @@ function renderLoop() {
     if (researchTable) {
       const dx = player.sprite.position.x - researchTable.position.x;
       const dz = player.sprite.position.z - researchTable.position.z;
-      const distance = Math.sqrt(dx * dx + dz * dz); // 2D distance (ignore Y)
-      if (distance < 2.5) {
-        console.log("🟢 Near Research Table!");
-        console.log("  Player pos:", player.sprite.position.x.toFixed(2), player.sprite.position.y.toFixed(2), player.sprite.position.z.toFixed(2));
-        console.log("  Table pos:", researchTable.position.x.toFixed(2), researchTable.position.y.toFixed(2), researchTable.position.z.toFixed(2));
-        console.log("  Distance (2D):", distance.toFixed(2), "Closest so far:", closestDistance.toFixed(2));
-      }
+      const distance = Math.sqrt(dx * dx + dz * dz);
       if (distance < 2.5 && distance < closestDistance) {
         closestDistance = distance;
         closestInteraction = {
           type: 'researchTable',
           position: researchTable.position,
-          yOffset: 2.5  // Raised from 1.5
+          yOffset: 2.5
         };
       }
     }
@@ -542,19 +486,13 @@ function renderLoop() {
     if (table2) {
       const dx = player.sprite.position.x - table2.position.x;
       const dz = player.sprite.position.z - table2.position.z;
-      const distance = Math.sqrt(dx * dx + dz * dz); // 2D distance (ignore Y)
-      if (distance < 2.5) {
-        console.log("🔵 Near Table2!");
-        console.log("  Player pos:", player.sprite.position.x.toFixed(2), player.sprite.position.y.toFixed(2), player.sprite.position.z.toFixed(2));
-        console.log("  Table pos:", table2.position.x.toFixed(2), table2.position.y.toFixed(2), table2.position.z.toFixed(2));
-        console.log("  Distance (2D):", distance.toFixed(2), "Closest so far:", closestDistance.toFixed(2));
-      }
+      const distance = Math.sqrt(dx * dx + dz * dz);
       if (distance < 2.5 && distance < closestDistance) {
         closestDistance = distance;
         closestInteraction = {
           type: 'table2',
           position: table2.position,
-          yOffset: 3  // Raised from 2
+          yOffset: 3
         };
       }
     }
@@ -651,9 +589,8 @@ function renderLoop() {
       } else if (closestInteraction.type === 'tableTV') {
         // Place the E just above the retro TV model if available, otherwise slightly lower than before
         const tvModel = allObjects["Models/retroTv.glb"];
-        if (tvModel) {
-          const box = new THREE.Box3().setFromObject(tvModel);
-          const topY = box.max.y;
+        if (tvModel && tvModelBounds) {
+          const topY = tvModelBounds.max.y;
           ui.eKeySprite.position.set(tvModel.position.x, topY + 0.05, tvModel.position.z);
         } else {
           ui.eKeySprite.position.set(
@@ -666,14 +603,12 @@ function renderLoop() {
         // For the computer interaction, prefer to align the E's Y with the retro TV E Y
         const compModel = allObjects["Models/computer2.glb"];
         const tvModel = allObjects["Models/retroTv.glb"];
-        if (compModel && tvModel) {
-          const tvBox = new THREE.Box3().setFromObject(tvModel);
-          const tvTopY = tvBox.max.y;
+        if (compModel && tvModel && tvModelBounds) {
+          const tvTopY = tvModelBounds.max.y;
           // place the Git E at the same height above the TV (gives consistent visual alignment)
           ui.eKeySprite.position.set(compModel.position.x, tvTopY + 0.05, compModel.position.z);
-        } else if (compModel) {
-          const box = new THREE.Box3().setFromObject(compModel);
-          const topY = box.max.y;
+        } else if (compModel && computer2Bounds) {
+          const topY = computer2Bounds.max.y;
           ui.eKeySprite.position.set(compModel.position.x, topY + 0.2, compModel.position.z);
         } else {
           ui.eKeySprite.position.set(
@@ -726,17 +661,12 @@ function renderLoop() {
         // setFrame expects (texture, frameIndex, framesHoriz, framesVert)
         if (typeof setFrame === 'function') {
           setFrame(tvAnim.texture, tvAnim.current, tvAnim.framesHoriz, tvAnim.framesVert);
-        } else {
-          console.warn('setFrame is not defined - cannot advance TV sprite sheet');
         }
       }
     }
 
   // Render using the currently active camera (player-follow or static TV)
   renderer.render(scene, activeCamera);
-
-    // Debug collisions
-    checkCollisions(player.sprite);
   }
 
   requestAnimationFrame(renderLoop);

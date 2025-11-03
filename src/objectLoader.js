@@ -33,9 +33,7 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
           const framesVert = 1;
           const sheetPath = 'WatchManFinal-Sheet.png';
 
-          const sheetTexture = loadSpriteSheet(sheetPath, framesHoriz, framesVert, () => {
-            console.log('Loaded TV sprite sheet:', sheetPath);
-          });
+          const sheetTexture = loadSpriteSheet(sheetPath, framesHoriz, framesVert);
 
           // Determine screen dimensions from TV box
           const screenWidth = Math.max(boxSize.x * 0.475, 0.5);
@@ -65,7 +63,7 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
             acc: 0
           };
         } catch (err) {
-          console.warn('Failed to attach sprite-sheet to retro TV:', err);
+          // Failed to attach sprite sheet
         }
       }
 
@@ -93,10 +91,8 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
       if (addToColliders) {
         colliders.push({ model: colliderModel, box });
       }
-      console.log(`[SUCCESS] Loaded: ${path}`);
       if (onProgress) onProgress(path, true);
     } catch (err) {
-      console.error(`[ERROR] Failed to load ${path}:`, err);
       if (onProgress) onProgress(path, false);
     }
   }
