@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 
+// Spotlight audio variables
+let spotlightAudio = null;
+let spotlightAudioLoaded = false;
+let spotlightAudioLoading = false;
+let spotlightAudioBuffer = null;
+
 export class Cutscene {
   constructor(scene, camera, renderer, player) {
     this.scene = scene;
@@ -19,6 +25,38 @@ export class Cutscene {
     this.createFadeOverlay();
     this.createDialogueUI();
     this.createSpotlight();
+
+    // Prepare spotlight audio (load only once)
+    if (!spotlightAudioLoading && !spotlightAudioLoaded) {
+      spotlightAudioLoading = true;
+      // Try to get a listener from the camera if available
+      let listener = null;
+      if (this.camera && this.camera.children) {
+        for (let i = 0; i < this.camera.children.length; i++) {
+          if (this.camera.children[i] instanceof THREE.AudioListener) {
+            listener = this.camera.children[i];
+            break;
+          }
+        }
+      }
+      if (!listener) {
+        listener = new THREE.AudioListener();
+        this.camera.add(listener);
+      }
+      const audioLoader = new THREE.AudioLoader();
+      audioLoader.load(
+        'spotlight.mp3',
+        (buffer) => {
+          spotlightAudioBuffer = buffer;
+          spotlightAudioLoaded = true;
+          console.log('Spotlight audio loaded successfully');
+        },
+        undefined,
+        (error) => {
+          console.error('Error loading spotlight audio:', error);
+        }
+      );
+    }
     
     // Define cutscene steps with camera positions and dialogue
     this.steps = [
@@ -193,6 +231,44 @@ export class Cutscene {
     
     // Show first dialogue immediately
     this.showCurrentStep();
+
+    // Play spotlight audio at cutscene start
+    console.log('Attempting to play spotlight audio. Loaded:', spotlightAudioLoaded);
+    if (spotlightAudioLoaded && spotlightAudioBuffer) {
+      // Try to get a listener from the camera if available
+      let listener = null;
+      if (this.camera && this.camera.children) {
+        for (let i = 0; i < this.camera.children.length; i++) {
+          if (this.camera.children[i] instanceof THREE.AudioListener) {
+            listener = this.camera.children[i];
+            break;
+          }
+        }
+      }
+      if (!listener) {
+        listener = new THREE.AudioListener();
+        this.camera.add(listener);
+      }
+      spotlightAudio = new THREE.Audio(listener);
+      spotlightAudio.setBuffer(spotlightAudioBuffer);
+      spotlightAudio.setLoop(false);
+      spotlightAudio.setVolume(1.0);
+      spotlightAudio.play().then(() => {
+        console.log('Spotlight audio playing');
+      }).catch((err) => {
+        console.error('Error playing spotlight audio:', err);
+      });
+    } else {
+      console.log('Spotlight audio not loaded yet, checking file path...');
+      // Try to play it directly with HTML5 Audio as fallback
+      const fallbackAudio = new Audio('spotlight.mp3');
+      fallbackAudio.volume = 1.0;
+      fallbackAudio.play().then(() => {
+        console.log('Spotlight audio playing via fallback');
+      }).catch((err) => {
+        console.error('Error playing spotlight audio via fallback:', err);
+      });
+    }
   }
 
   showCurrentStep() {

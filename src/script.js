@@ -55,7 +55,7 @@ loadingManager.onLoad = () => {
             });
             menu.menuAudioStarted = true;
           }
-          // Fade out loading screen
+          // Fade out loading screen (just hide, no cutscene/audio)
           if (loadingScreen) {
             loadingScreen.style.opacity = '0';
             setTimeout(() => {

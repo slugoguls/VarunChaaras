@@ -452,12 +452,36 @@ export class MenuScreen {
   }
 
   startGame() {
-    this.menuActive = false;
+    // Do not pause menu, just fade out to black
     document.body.style.cursor = 'default';
     this.stopMenuMusic();
-    if (this.onStart) {
-      this.onStart();
-    }
+    const fadeDiv = document.createElement('div');
+    fadeDiv.style.position = 'fixed';
+    fadeDiv.style.top = '0';
+    fadeDiv.style.left = '0';
+    fadeDiv.style.width = '100%';
+    fadeDiv.style.height = '100%';
+    fadeDiv.style.backgroundColor = '#000';
+    fadeDiv.style.opacity = '0';
+    fadeDiv.style.transition = 'opacity 1.5s';
+    fadeDiv.style.zIndex = '99999';
+    document.body.appendChild(fadeDiv);
+    setTimeout(() => {
+      fadeDiv.style.opacity = '1';
+    }, 50);
+    // When fade completes exactly, play audio and switch to cutscene immediately
+    setTimeout(() => {
+      const spotlightAudio = new Audio('spotlight.mp3');
+      spotlightAudio.volume = 1.0;
+      spotlightAudio.play().catch(() => {});
+      if (this.onStart) {
+        this.onStart();
+      }
+      // Remove fade overlay so cutscene is visible
+      setTimeout(() => {
+        document.body.removeChild(fadeDiv);
+      }, 100);
+    }, 1550); // 50ms + 1500ms fade = exactly when fade completes
   }
 
   update(delta) {
