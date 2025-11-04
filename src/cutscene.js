@@ -149,6 +149,17 @@ export class Cutscene {
     this.originalCameraPosition = this.camera.position.clone();
     this.originalCameraRotation = this.camera.rotation.clone();
     
+    // Store original player material and swap to MeshBasicMaterial for entire cutscene
+    if (this.player && this.player.sprite && this.player.sprite.material) {
+      this._originalPlayerMaterial = this.player.sprite.material;
+      this.player.sprite.material = new THREE.MeshBasicMaterial({
+        map: this.player.sprite.material.map,
+        transparent: true,
+        alphaTest: 0.5,
+        side: THREE.DoubleSide
+      });
+    }
+    
     // Rotate player to face the camera (turn around - face forward)
     if (this.player && this.player.sprite) {
       this.player.sprite.rotation.y = 0; // Face front (toward camera)
@@ -275,6 +286,11 @@ export class Cutscene {
     this.fadeElement.style.opacity = '1';
     
     setTimeout(() => {
+      // Restore player material
+      if (this.player && this.player.sprite && this._originalPlayerMaterial) {
+        this.player.sprite.material = this._originalPlayerMaterial;
+      }
+      
       // Restore lights
       this.scene.traverse((child) => {
         if (child.isLight && child !== this.spotlight && child !== this.playerLight) {
