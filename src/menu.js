@@ -455,6 +455,7 @@ export class MenuScreen {
     // Do not pause menu, just fade out to black
     document.body.style.cursor = 'default';
     this.stopMenuMusic();
+    
     const fadeDiv = document.createElement('div');
     fadeDiv.style.position = 'fixed';
     fadeDiv.style.top = '0';
@@ -469,13 +470,32 @@ export class MenuScreen {
     setTimeout(() => {
       fadeDiv.style.opacity = '1';
     }, 50);
-    // When fade completes exactly, play audio and switch to cutscene immediately
+    // When fade completes exactly, play spotlight audio and start cutscene song fade-in
     setTimeout(() => {
       const spotlightAudio = new Audio('spotlight.mp3');
       spotlightAudio.volume = 1.0;
       spotlightAudio.play().catch(() => {});
+      
+      // Start cutscene song and fade it in after spotlight plays
+      const cutsceneSong = new Audio('cutscenesong.mp3');
+      cutsceneSong.volume = 0;
+      cutsceneSong.loop = false;
+      cutsceneSong.play().catch(() => {});
+      
+      // Fade in the cutscene song to lower volume (0.4)
+      let volumeStep = 0;
+      const fadeInInterval = setInterval(() => {
+        volumeStep += 0.01;
+        if (volumeStep >= 0.4) {
+          cutsceneSong.volume = 0.4;
+          clearInterval(fadeInInterval);
+        } else {
+          cutsceneSong.volume = volumeStep;
+        }
+      }, 50); // Gradual fade in
+      
       if (this.onStart) {
-        this.onStart();
+        this.onStart(cutsceneSong); // Pass cutscene song to be stopped later
       }
       // Remove fade overlay so cutscene is visible
       setTimeout(() => {

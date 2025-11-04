@@ -122,7 +122,7 @@ let cutscenePlaying = false;
 let cutscene = null;
 let joystick; // Declare here
 
-const menu = new MenuScreen(() => {
+const menu = new MenuScreen((cutsceneSong) => {
   // Start cutscene instead of going directly to game
   cutscenePlaying = true;
   cutscene = new Cutscene(scene, camera, renderer, player);
@@ -130,6 +130,11 @@ const menu = new MenuScreen(() => {
     // After cutscene completes, start the game
     gameStarted = true;
     cutscenePlaying = false;
+    // Stop cutscene song
+    if (cutsceneSong) {
+      cutsceneSong.pause();
+      cutsceneSong.currentTime = 0;
+    }
     // Enable joystick when game starts (it will show on touch)
     if (joystick) {
       joystick.enabled = true;
