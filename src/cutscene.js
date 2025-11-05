@@ -28,49 +28,61 @@ export class Cutscene {
         cameraPosition: { x: 0, y: -4, z: 6 },
         cameraLookAt: { x: 0, y: -9, z: 0 },
         spotlightTarget: { x: 0, y: -9, z: 0 },
-        spotlightIntensity: 150
+        spotlightIntensity: 150,
+        spotlightAngle: Math.PI / 12, // Smaller circle focusing on player
+        centerSpotlight: true // Spotlight from center
       },
       {
         dialogue: "This beauty right here? My vinyl collection. Nothing beats the warmth of analog sound... go ahead, press E and feel it yourself.",
         cameraPosition: { x: -7, y: -6, z: -5 },
         cameraLookAt: { x: -7.25, y: -9, z: -8.5 },
         spotlightTarget: { x: -7.25, y: -9, z: -8.5 },
-        spotlightIntensity: 100
+        spotlightIntensity: 180,
+        spotlightAngle: Math.PI / 18 // Very small circle on record player
       },
       {
         dialogue: "Ah, the research table—where the magic happens. Late nights, endless coffee, debugging until sunrise... you know how it is.",
-        cameraPosition: { x: -5, y: -7, z: -4 },
+        cameraPosition: { x: -5.5, y: -7, z: -4 }, // Pulled left a bit
         cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
-        spotlightTarget: { x: -2.75, y: -10, z: -9.25 },
-        spotlightIntensity: 100
+        spotlightTarget: { x: -2.75, y: -9, z: -9.25 },
+        spotlightIntensity: 120,
+        spotlightAngle: Math.PI / 14 // Smaller focused spotlight
       },
       {
         dialogue: "Check out this retro beast! Found it at a thrift store... still works perfectly. Press E if you wanna see what's playing.",
-        cameraPosition: { x: -1, y: -5.5, z: -1 },
+        cameraPosition: { x: -1, y: -5.5, z: -1 }, // Camera higher to see full TV
         cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
         spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
-        spotlightIntensity: 80
+        spotlightIntensity: 120,
+        spotlightAngle: Math.PI / 10,
+        spotlightFromAboveFront: true // Spotlight from above and front
       },
       {
         dialogue: "My battlestation. This is where I bring ideas to life—code, design, everything. Press E to check out my GitHub if you're curious.",
-        cameraPosition: { x: 2, y: -5.5, z: -1 },
+        cameraPosition: { x: 2, y: -5.5, z: -1 }, // Camera higher to see full computer
         cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
-        spotlightIntensity: 100
+        spotlightIntensity: 130,
+        spotlightAngle: Math.PI / 10,
+        spotlightFromAboveFront: true // Spotlight from above and front
       },
       {
         dialogue: "These paintings... each one tells a story. They're not just decoration—they're inspiration. Click on 'em to see them up close!",
         cameraPosition: { x: 3, y: -5, z: -3 },
         cameraLookAt: { x: 9.5, y: -7, z: -7 },
         spotlightTarget: { x: 9.5, y: -7, z: -7 },
-        spotlightIntensity: 150
+        spotlightIntensity: 180, // Slightly less intensity
+        spotlightAngle: Math.PI / 6, // Wider angle to cover wall
+        paintingsLight: true // Special positioning for paintings
       },
       {
         dialogue: "And this little troublemaker? That's Lumi! She's usually napping, but... try pressing E. She might surprise you.",
-        cameraPosition: { x: 3, y: -7, z: 2 },
-        cameraLookAt: { x: 5, y: -9.5, z: 2 },
-        spotlightTarget: { x: 5, y: -9.5, z: 2 },
-        spotlightIntensity: 120
+        cameraPosition: { x: -5, y: -7, z: -3 }, // Front view of Lumi
+        cameraLookAt: { x: -5, y: -9.3, z: -5 }, // Lumi's actual position
+        spotlightTarget: { x: -5, y: -9.3, z: -5 },
+        spotlightIntensity: 140,
+        spotlightAngle: Math.PI / 14, // Smaller spotlight fitting Lumi
+        lumiScene: true // Enable idle animation for Lumi
       },
       {
         dialogue: "Alright, that's the tour! Feel free to explore—WASD to move around. Make yourself at home... and have fun!",
@@ -152,15 +164,26 @@ export class Cutscene {
     this.spotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 8, 0.5, 2);
     this.spotlight.position.set(0, 10, 0);
     this.spotlight.castShadow = true;
-    this.spotlight.shadow.mapSize.width = 1024;
-    this.spotlight.shadow.mapSize.height = 1024;
+    this.spotlight.shadow.mapSize.width = 2048; // Higher resolution shadows
+    this.spotlight.shadow.mapSize.height = 2048;
+    this.spotlight.shadow.camera.near = 0.5;
+    this.spotlight.shadow.camera.far = 50;
     this.scene.add(this.spotlight);
     this.scene.add(this.spotlight.target);
     
     // Add a front-facing point light to illuminate the player during cutscene
     this.playerLight = new THREE.PointLight(0xffffff, 2, 10);
     this.playerLight.position.set(0, -8, 5);
+    this.playerLight.castShadow = true; // Enable shadows for player light
     this.scene.add(this.playerLight);
+    
+    // Enable shadows for all objects in the scene
+    this.scene.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
   }
 
   // Camera mouse pan effect
@@ -229,6 +252,12 @@ export class Cutscene {
         child.intensity = 0;
       }
     });
+    
+    // Hide Lumi during first cutscene step
+    if (window.lumi && window.lumi.cat) {
+      this._lumiOriginalVisible = window.lumi.cat.visible;
+      window.lumi.cat.visible = false;
+    }
     
     // Make sure fade is transparent
     this.fadeElement.style.opacity = '0';
@@ -371,11 +400,44 @@ export class Cutscene {
       );
       this.spotlight.intensity = step.spotlightIntensity || 100;
       
-      // Position spotlight above target
+      // Set spotlight angle from step data or use default
+      this.spotlight.angle = step.spotlightAngle || Math.PI / 8;
+      this.spotlight.penumbra = 0.4; // Consistent soft edges
+      
+      // Position spotlight based on scene requirements
+      let offsetX = 3;
+      let offsetY = 10;
+      let offsetZ = 8;
+      
+      // First scene: center the spotlight
+      if (step.centerSpotlight) {
+        offsetX = 0;
+        offsetZ = 8; // Front position
+        offsetY = 10;
+      }
+      // TV and computer: from above and front to light them up
+      else if (step.spotlightFromAboveFront) {
+        offsetX = 0;
+        offsetZ = 3; // In front of object
+        offsetY = 12; // Above
+      }
+      // Paintings: position to light up the wall
+      else if (step.paintingsLight) {
+        offsetX = 0; // Center between camera and wall
+        offsetZ = -4; // Between camera and paintings
+        offsetY = 2; // Slightly above eye level
+      }
+      // Lumi scene: from front
+      else if (step.lumiScene) {
+        offsetX = 0;
+        offsetZ = 3; // Front of Lumi
+        offsetY = 8;
+      }
+      
       this.spotlight.position.set(
-        step.spotlightTarget.x,
-        step.spotlightTarget.y + 10,
-        step.spotlightTarget.z
+        step.spotlightTarget.x + offsetX,
+        step.spotlightTarget.y + offsetY,
+        step.spotlightTarget.z + offsetZ
       );
     } else {
       this.spotlight.intensity = 0;
@@ -386,6 +448,11 @@ export class Cutscene {
     console.log('Next step called, current:', this.currentStep);
     this.currentStep++;
     this.waitingForClick = false;
+    
+    // Show Lumi after the first step (she was hidden during player's introduction)
+    if (this.currentStep === 1 && window.lumi && window.lumi.cat) {
+      window.lumi.cat.visible = true;
+    }
     
     // Check if cutscene is complete
     if (this.currentStep >= this.steps.length) {
@@ -461,6 +528,11 @@ export class Cutscene {
           child.intensity = child.userData.originalIntensity || 0;
         }
       });
+
+      // Restore Lumi's visibility
+      if (window.lumi && window.lumi.cat && this._lumiOriginalVisible !== undefined) {
+        window.lumi.cat.visible = this._lumiOriginalVisible;
+      }
 
       // Remove cutscene lights
       this.spotlight.intensity = 0;

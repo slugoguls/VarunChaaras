@@ -503,6 +503,8 @@ function renderLoop() {
   // Handle cutscene
   if (cutscenePlaying && cutscene) {
     cutscene.update(delta);
+    // Update Lumi during cutscene so she animates
+    if (lumi && lumi.update) lumi.update(delta, player.sprite);
     renderer.render(scene, camera);
     requestAnimationFrame(renderLoop);
     return;
