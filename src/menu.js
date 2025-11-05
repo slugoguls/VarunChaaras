@@ -452,7 +452,19 @@ export class MenuScreen {
   }
 
   startGame() {
-    // Do not pause menu, just fade out to black
+    // Disable menu immediately and hide all menu elements
+    this.menuActive = false;
+    this.interactionsEnabled = false;
+    
+    // Hide all menu sprites
+    if (this.bgSprite) this.bgSprite.visible = false;
+    if (this.msgSprite) this.msgSprite.visible = false;
+    if (this.startButton) this.startButton.visible = false;
+    if (this.resumeButton) this.resumeButton.visible = false;
+    if (this.settingsButton) this.settingsButton.visible = false;
+    if (this.muteButton) this.muteButton.visible = false;
+    if (this.spaceCat && this.spaceCat.spaceCat) this.spaceCat.spaceCat.visible = false;
+    
     document.body.style.cursor = 'default';
     this.stopMenuMusic();
     
