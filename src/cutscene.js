@@ -21,6 +21,65 @@ export class Cutscene {
     this.originalCameraPosition = null;
     this.originalCameraRotation = null;
     this.waitingForClick = false;
+    // Restore cutscene steps
+    this.steps = [
+      {
+        dialogue: "Oh! Didn't expect anyone to find this place... but hey, welcome to my world. Let me show you around.",
+        cameraPosition: { x: 0, y: -4, z: 6 },
+        cameraLookAt: { x: 0, y: -9, z: 0 },
+        spotlightTarget: { x: 0, y: -9, z: 0 },
+        spotlightIntensity: 150
+      },
+      {
+        dialogue: "This beauty right here? My vinyl collection. Nothing beats the warmth of analog sound... go ahead, press E and feel it yourself.",
+        cameraPosition: { x: -7, y: -6, z: -5 },
+        cameraLookAt: { x: -7.25, y: -9, z: -8.5 },
+        spotlightTarget: { x: -7.25, y: -9, z: -8.5 },
+        spotlightIntensity: 100
+      },
+      {
+        dialogue: "Ah, the research table—where the magic happens. Late nights, endless coffee, debugging until sunrise... you know how it is.",
+        cameraPosition: { x: -5, y: -7, z: -4 },
+        cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
+        spotlightTarget: { x: -2.75, y: -10, z: -9.25 },
+        spotlightIntensity: 100
+      },
+      {
+        dialogue: "Check out this retro beast! Found it at a thrift store... still works perfectly. Press E if you wanna see what's playing.",
+        cameraPosition: { x: -1, y: -5.5, z: -1 },
+        cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
+        spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
+        spotlightIntensity: 80
+      },
+      {
+        dialogue: "My battlestation. This is where I bring ideas to life—code, design, everything. Press E to check out my GitHub if you're curious.",
+        cameraPosition: { x: 2, y: -5.5, z: -1 },
+        cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
+        spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
+        spotlightIntensity: 100
+      },
+      {
+        dialogue: "These paintings... each one tells a story. They're not just decoration—they're inspiration. Click on 'em to see them up close!",
+        cameraPosition: { x: 3, y: -5, z: -3 },
+        cameraLookAt: { x: 9.5, y: -7, z: -7 },
+        spotlightTarget: { x: 9.5, y: -7, z: -7 },
+        spotlightIntensity: 150
+      },
+      {
+        dialogue: "And this little troublemaker? That's Lumi! She's usually napping, but... try pressing E. She might surprise you.",
+        cameraPosition: { x: 3, y: -7, z: 2 },
+        cameraLookAt: { x: 5, y: -9.5, z: 2 },
+        spotlightTarget: { x: 5, y: -9.5, z: 2 },
+        spotlightIntensity: 120
+      },
+      {
+        dialogue: "Alright, that's the tour! Feel free to explore—WASD to move around. Make yourself at home... and have fun!",
+        cameraPosition: { x: 0, y: 2, z: 10 },
+        cameraLookAt: { x: 0, y: -8, z: 0 },
+        spotlightTarget: null,
+        spotlightIntensity: 0
+      }
+    ];
     
     this.createFadeOverlay();
     this.createDialogueUI();
@@ -29,20 +88,6 @@ export class Cutscene {
     // Prepare spotlight audio (load only once)
     if (!spotlightAudioLoading && !spotlightAudioLoaded) {
       spotlightAudioLoading = true;
-      // Try to get a listener from the camera if available
-      let listener = null;
-      if (this.camera && this.camera.children) {
-        for (let i = 0; i < this.camera.children.length; i++) {
-          if (this.camera.children[i] instanceof THREE.AudioListener) {
-            listener = this.camera.children[i];
-            break;
-          }
-        }
-      }
-      if (!listener) {
-        listener = new THREE.AudioListener();
-        this.camera.add(listener);
-      }
       const audioLoader = new THREE.AudioLoader();
       audioLoader.load(
         'spotlight.mp3',
@@ -57,66 +102,6 @@ export class Cutscene {
         }
       );
     }
-    
-    // Define cutscene steps with camera positions and dialogue
-    this.steps = [
-      {
-        dialogue: "Hey, wasn't expecting any visitors here but since you came, I'll show you around.",
-        cameraPosition: { x: 0, y: -4, z: 6 },
-        cameraLookAt: { x: 0, y: -9, z: 0 },
-        spotlightTarget: { x: 0, y: -9, z: 0 },
-        spotlightIntensity: 150
-      },
-      {
-        dialogue: "Over here is my record player. Press E to play some chill music while you explore.",
-        cameraPosition: { x: -7, y: -6, z: -5 },
-        cameraLookAt: { x: -7.25, y: -9, z: -8.5 },
-        spotlightTarget: { x: -7.25, y: -9, z: -8.5 },
-        spotlightIntensity: 100
-      },
-      {
-        dialogue: "This is my research table where I study and work on projects.",
-        cameraPosition: { x: -5, y: -7, z: -4 },
-        cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
-        spotlightTarget: { x: -2.75, y: -10, z: -9.25 },
-        spotlightIntensity: 100
-      },
-      {
-        dialogue: "Check out this retro TV! Press E to get a closer look at what's playing.",
-        cameraPosition: { x: -1, y: -5.5, z: -1 },
-        cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
-        spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
-        spotlightIntensity: 80
-      },
-      {
-        dialogue: "My computer setup - press E here to check out my GitHub projects.",
-        cameraPosition: { x: 2, y: -5.5, z: -1 },
-        cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
-        spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
-        spotlightIntensity: 100
-      },
-      {
-        dialogue: "These paintings on the walls are some of my favorite pieces. Click on them to see them up close!",
-        cameraPosition: { x: 3, y: -5, z: -3 },
-        cameraLookAt: { x: 9.5, y: -7, z: -7 },
-        spotlightTarget: { x: 9.5, y: -7, z: -7 },
-        spotlightIntensity: 150
-      },
-      {
-        dialogue: "And this is Lumi, my cat! She loves visitors. Press E to pet her and see what happens.",
-        cameraPosition: { x: 3, y: -7, z: 2 },
-        cameraLookAt: { x: 5, y: -9.5, z: 2 },
-        spotlightTarget: { x: 5, y: -9.5, z: 2 },
-        spotlightIntensity: 120
-      },
-      {
-        dialogue: "Feel free to explore! Use WASD or arrow keys to move around. Have fun!",
-        cameraPosition: { x: 0, y: 2, z: 10 },
-        cameraLookAt: { x: 0, y: -8, z: 0 },
-        spotlightTarget: null,
-        spotlightIntensity: 0
-      }
-    ];
   }
 
   createFadeOverlay() {
@@ -135,24 +120,29 @@ export class Cutscene {
   }
 
   createDialogueUI() {
+    // Inject madspixel font if not already present
+    if (!document.getElementById('madspixel-font')) {
+      const fontStyle = document.createElement('style');
+      fontStyle.id = 'madspixel-font';
+      fontStyle.innerHTML = `@font-face { font-family: 'Madspixel'; src: url('madspixel.ttf') format('truetype'); font-weight: normal; font-style: normal; }`;
+      document.head.appendChild(fontStyle);
+    }
     this.dialogueElement = document.createElement('div');
     this.dialogueElement.style.position = 'fixed';
-    this.dialogueElement.style.bottom = '80px';
     this.dialogueElement.style.left = '50%';
+    this.dialogueElement.style.bottom = '7%';
     this.dialogueElement.style.transform = 'translateX(-50%)';
     this.dialogueElement.style.width = '80%';
     this.dialogueElement.style.maxWidth = '800px';
-    this.dialogueElement.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    this.dialogueElement.style.color = '#ffffff';
-    this.dialogueElement.style.padding = '20px 30px';
-    this.dialogueElement.style.borderRadius = '10px';
-    this.dialogueElement.style.fontFamily = 'Arial, sans-serif';
-    this.dialogueElement.style.fontSize = '18px';
-    this.dialogueElement.style.lineHeight = '1.6';
+    this.dialogueElement.style.backgroundColor = '#000';
+    this.dialogueElement.style.color = '#fff';
+    this.dialogueElement.style.padding = '32px 32px 48px 32px';
+    this.dialogueElement.style.fontFamily = 'Madspixel, Arial, sans-serif';
+    this.dialogueElement.style.fontSize = '28px';
+    this.dialogueElement.style.lineHeight = '1.5';
     this.dialogueElement.style.textAlign = 'center';
     this.dialogueElement.style.display = 'none';
     this.dialogueElement.style.zIndex = '9999';
-    this.dialogueElement.style.border = '2px solid #ffffff';
     this.dialogueElement.style.cursor = 'pointer';
     document.body.appendChild(this.dialogueElement);
   }
@@ -166,13 +156,34 @@ export class Cutscene {
     this.spotlight.shadow.mapSize.height = 1024;
     this.scene.add(this.spotlight);
     this.scene.add(this.spotlight.target);
-
-    // No ambient light - everything outside spotlight is pitch black
     
     // Add a front-facing point light to illuminate the player during cutscene
     this.playerLight = new THREE.PointLight(0xffffff, 2, 10);
-    this.playerLight.position.set(0, -8, 5); // In front of player
+    this.playerLight.position.set(0, -8, 5);
     this.scene.add(this.playerLight);
+  }
+
+  // Camera mouse pan effect
+  _setupCameraMousePan() {
+    if (this._mousePanHandler) return; // Only set up once
+    this._mousePanHandler = (e) => {
+      if (!this.isPlaying) return;
+      // Get normalized mouse position (-1 to 1)
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      this._mousePanX = x;
+      this._mousePanY = y;
+    };
+    window.addEventListener('mousemove', this._mousePanHandler);
+    this._mousePanX = 0;
+    this._mousePanY = 0;
+  }
+
+  _removeCameraMousePan() {
+    if (this._mousePanHandler) {
+      window.removeEventListener('mousemove', this._mousePanHandler);
+      this._mousePanHandler = null;
+    }
   }
 
   start(onComplete) {
@@ -186,6 +197,9 @@ export class Cutscene {
     // Store original camera state
     this.originalCameraPosition = this.camera.position.clone();
     this.originalCameraRotation = this.camera.rotation.clone();
+
+    // Enable camera mouse pan
+    this._setupCameraMousePan();
     
     // Store original player material and swap to MeshBasicMaterial for entire cutscene
     if (this.player && this.player.sprite && this.player.sprite.material) {
@@ -274,11 +288,60 @@ export class Cutscene {
   showCurrentStep() {
     const step = this.steps[this.currentStep];
     console.log('Showing step', this.currentStep, step);
-    
     if (step.dialogue) {
-      this.dialogueElement.innerHTML = step.dialogue + '<div style="font-size: 14px; color: #aaaaaa; margin-top: 10px; font-style: italic;">Click to continue...</div>';
+      // Create dialogue container with empty text div for typewriter effect
+      this.dialogueElement.innerHTML = `
+        <div id="dialogue-text" style="padding-bottom:32px;"></div>
+        <div id="continue-text" style="position:absolute; left:50%; transform:translateX(-50%); bottom:18px; font-size:13px; color:#aaa; font-family:Madspixel,Arial,sans-serif; opacity:0; letter-spacing:1px;">Click to continue...</div>
+      `;
+      this.dialogueElement.style.backgroundColor = '#000';
+      this.dialogueElement.style.border = 'none';
+      this.dialogueElement.style.borderRadius = '0';
+      this.dialogueElement.style.fontFamily = 'Madspixel, Arial, sans-serif';
+      this.dialogueElement.style.fontSize = '28px';
+      this.dialogueElement.style.color = '#fff';
       this.dialogueElement.style.display = 'block';
-      this.waitingForClick = true;
+      this.waitingForClick = false;
+      
+      // Typewriter effect with dramatic punctuation pauses
+      const textDiv = document.getElementById('dialogue-text');
+      const continueDiv = document.getElementById('continue-text');
+      const fullText = step.dialogue;
+      let charIndex = 0;
+      const baseTypeSpeed = 40; // milliseconds per character
+      
+      const getDelay = (char, nextChar) => {
+        // Dramatic pauses for punctuation
+        if (char === '.' || char === '!' || char === '?') {
+          return baseTypeSpeed * 15; // Long pause after sentence end
+        } else if (char === ',' || char === ';') {
+          return baseTypeSpeed * 8; // Medium pause after comma/semicolon
+        } else if (char === ':') {
+          return baseTypeSpeed * 6; // Pause after colon
+        } else if (char === '-') {
+          return baseTypeSpeed * 4; // Slight pause for dashes
+        } else if (char === ' ' && (nextChar === nextChar?.toUpperCase() && nextChar?.match(/[A-Z]/))) {
+          return baseTypeSpeed * 2; // Slight pause before capitalized words (emphasis)
+        }
+        return baseTypeSpeed;
+      };
+      
+      const typeWriter = () => {
+        if (charIndex < fullText.length) {
+          const currentChar = fullText.charAt(charIndex);
+          const nextChar = fullText.charAt(charIndex + 1);
+          textDiv.textContent += currentChar;
+          charIndex++;
+          const delay = getDelay(currentChar, nextChar);
+          setTimeout(typeWriter, delay);
+        } else {
+          // Typing complete, show continue prompt
+          continueDiv.style.opacity = '0.7';
+          this.waitingForClick = true;
+        }
+      };
+      
+      typeWriter();
     }
     
     // Set camera position immediately
@@ -347,12 +410,37 @@ export class Cutscene {
       this.player.sprite.material.map.offset.x = column / framesHoriz;
       this.player.sprite.material.map.offset.y = 1 - (row + 1) / framesVert;
     }
+
+    // Camera mouse pan effect (subtle)
+    if (this._mousePanX !== undefined && this._mousePanY !== undefined && this.currentStep < this.steps.length) {
+      const step = this.steps[this.currentStep];
+      if (step.cameraPosition && step.cameraLookAt) {
+        // Calculate base direction
+        const basePos = step.cameraPosition;
+        const baseLook = step.cameraLookAt;
+        // Pan range (smaller = more subtle)
+        const panRange = 0.4;
+        const panX = this._mousePanX * panRange;
+        const panY = this._mousePanY * panRange * 0.5;
+        // New camera position
+        this.camera.position.set(
+          basePos.x + panX,
+          basePos.y + panY,
+          basePos.z
+        );
+        // Always look at the same point (or could add a tiny offset for more parallax)
+        this.camera.lookAt(baseLook.x, baseLook.y, baseLook.z);
+      }
+    }
   }
 
   end() {
     console.log('Cutscene ending...');
     this.isPlaying = false;
     this.dialogueElement.style.display = 'none';
+
+    // Remove camera mouse pan
+    this._removeCameraMousePan();
     
     // Remove click listeners
     document.removeEventListener('click', this.clickHandler);
