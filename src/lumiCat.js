@@ -53,6 +53,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   let attackCount = 0;
   let _attackActive = false;
   let movementLocked = false; // Flag to lock movement during cutscenes
+  let stateBeforeAttack = null; // Store state before attack to return to it
 
   function changeState(newState) {
     // If movement is locked, only allow idle, sleep, or attack states (no walking)
@@ -70,6 +71,8 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   }
   
   function triggerPlayerAttack() {
+    // Store current state before attacking so we can return to it
+    stateBeforeAttack = currentState;
     _attackActive = true;
     changeState("attack");
   }
@@ -166,7 +169,10 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     // Handle attack state
     if (currentState === "attack" && _attackActive && currentFrame >= states.attack.end) {
       _attackActive = false;
-      changeState("walk");
+      // Return to the state we were in before the attack (idle or sleep, not walk)
+      const returnState = stateBeforeAttack || "idle";
+      changeState(returnState);
+      stateBeforeAttack = null;
     }
 
     // Animate sprite frames
