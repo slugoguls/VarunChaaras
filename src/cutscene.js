@@ -24,7 +24,7 @@ export class Cutscene {
     // Restore cutscene steps
     this.steps = [
       {
-        dialogue: "Oh! Didn't expect anyone to find this place... but hey, welcome to my world. Let me show you around.",
+        dialogue: "You found this place. Interesting... Most people don't make it past the loading screen. Come, let me show you what you're supposed to see.",
         cameraPosition: { x: 0, y: -4, z: 6 },
         cameraLookAt: { x: 0, y: -9, z: 0 },
         spotlightTarget: { x: 0, y: -9, z: 0 },
@@ -33,7 +33,7 @@ export class Cutscene {
         centerSpotlight: true // Spotlight from center
       },
       {
-        dialogue: "This beauty right here? My vinyl collection. Nothing beats the warmth of analog sound... go ahead, press E and feel it yourself.",
+        dialogue: "This vinyl collection... yes, I remember now. Analog warmth, physical media, all that. Press E if you want to hear it. You're allowed to interact.",
         cameraPosition: { x: -7, y: -6, z: -5 },
         cameraLookAt: { x: -7.25, y: -9, z: -8.5 },
         spotlightTarget: { x: -7.25, y: -9, z: -8.5 },
@@ -41,7 +41,7 @@ export class Cutscene {
         spotlightAngle: Math.PI / 18 // Very small circle on record player
       },
       {
-        dialogue: "Ah, the research table—where the magic happens. Late nights, endless coffee, debugging until sunrise... you know how it is.",
+        dialogue: "The desk. Where I—where things get built. Code compiled, projects finished... supposedly. Everything works as intended here. Nothing out of place.",
         cameraPosition: { x: -5.5, y: -7, z: -4 }, // Pulled left a bit
         cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
         spotlightTarget: { x: -2.75, y: -9, z: -9.25 },
@@ -49,7 +49,7 @@ export class Cutscene {
         spotlightAngle: Math.PI / 14 // Smaller focused spotlight
       },
       {
-        dialogue: "Check out this retro beast! Found it at a thrift store... still works perfectly. Press E if you wanna see what's playing.",
+        dialogue: "A CRT from another era. Still functional, like everything else in this space. Press E to see what plays. It's... familiar content.",
         cameraPosition: { x: -1, y: -6.5, z: -0.5 }, // Slightly higher and closer
         cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
         spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
@@ -58,7 +58,7 @@ export class Cutscene {
         spotlightFromAboveFront: true // Spotlight from above and front
       },
       {
-        dialogue: "My battlestation. This is where I bring ideas to life—code, design, everything. Press E to check out my GitHub if you're curious.",
+        dialogue: "The setup. Where the work happens—development, design, the usual. Press E to check the GitHub. All the commits are there. Everything documented. As it should be.",
         cameraPosition: { x: 2, y: -6.5, z: -0.5 }, // Slightly higher and closer
         cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
@@ -67,7 +67,7 @@ export class Cutscene {
         spotlightFromAboveFront: true // Spotlight from above and front
       },
       {
-        dialogue: "These paintings... each one tells a story. They're not just decoration—they're inspiration. Click on 'em to see them up close!",
+        dialogue: "Art on the walls. Each one means something specific. They're supposed to inspire... that's what they're for. Click them if you want a closer look.",
         cameraPosition: { x: 3, y: -5, z: -3 },
         cameraLookAt: { x: 9.5, y: -7, z: -7 },
         spotlightTarget: { x: 9.5, y: -7, z: -7 }, // Middle of the wall with paintings
@@ -76,7 +76,7 @@ export class Cutscene {
         paintingsLight: true // Special positioning for paintings
       },
       {
-        dialogue: "And this little troublemaker? That's Lumi! She's usually napping, but... try pressing E. She might surprise you.",
+        dialogue: "Lumi. The cat. She sleeps, sometimes attacks... typical cat behavior. Press E and see for yourself. She's harmless. Everything here is.",
         cameraPosition: { x: -5, y: -7.5, z: -2 }, // A little down and back
         cameraLookAt: { x: -5, y: -9.3, z: -5 }, // Lumi's actual position
         spotlightTarget: { x: -5, y: -9.3, z: -5 },
@@ -85,7 +85,7 @@ export class Cutscene {
         lumiScene: true // Enable idle animation for Lumi
       },
       {
-        dialogue: "Alright, that's the tour! Feel free to explore—WASD to move around. Make yourself at home... and have fun!",
+        dialogue: "That's everything. WASD to move. Interact with whatever catches your eye. This is the space. Your experience. Make yourself comfortable.",
         cameraPosition: { x: 0, y: 2, z: 10 },
         cameraLookAt: { x: 0, y: -8, z: 0 },
         spotlightTarget: null,
