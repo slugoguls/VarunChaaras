@@ -455,6 +455,7 @@ window.addEventListener("touchend", (e) => {
 
 // === LUMI CAT ===
 lumi = await createLumiCat(scene, colliders, boundary);
+window.lumi = lumi; // Make accessible to cutscene
 
 // === TABLE3 INTERACTION ZONES ===
 if (table3) {

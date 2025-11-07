@@ -52,8 +52,14 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   let walkAxis = 'x';
   let attackCount = 0;
   let _attackActive = false;
+  let movementLocked = false; // Flag to lock movement during cutscenes
 
   function changeState(newState) {
+    // If movement is locked, only allow idle, sleep, or attack states (no walking)
+    if (movementLocked && newState === "walk") {
+      return; // Don't change to walk when locked
+    }
+    
     if (currentState !== newState) {
       currentState = newState;
       currentFrame = states[newState].start;
@@ -97,7 +103,7 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   }
 
   function updateBehavior(delta) {
-    if (currentState === "attack") return;
+    if (currentState === "attack" || movementLocked) return; // Don't change behavior when movement is locked
     
     walkTimer -= delta;
     if (walkTimer <= 0) {
@@ -117,11 +123,26 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   }
 
   function update(delta, playerSprite) {
+    // If movement is locked, only update animation frames, don't move or change behavior
+    if (movementLocked) {
+      frameTimer += delta;
+      // Animate sprite frames
+      if (frameTimer >= frameDuration) {
+        frameTimer = 0;
+        currentFrame++;
+        if (currentFrame > states[currentState].end) {
+          currentFrame = states[currentState].start;
+        }
+        setFrame(texture, currentFrame, framesHoriz, framesVert);
+      }
+      return; // Don't do any behavior or movement updates
+    }
+
     frameTimer += delta;
     updateBehavior(delta);
 
-    // Handle movement
-    if (currentState === "walk") {
+    // Handle movement (skip if movement is locked)
+    if (currentState === "walk" && !movementLocked) {
       const nextPos = new THREE.Vector3(cat.position.x, cat.position.y, cat.position.z);
       if (walkAxis === 'x') {
         nextPos.x += speed * direction * delta;
@@ -163,7 +184,16 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     cat, 
     update, 
     collisionBoxMesh, 
-    triggerPlayerAttack, 
-    get isAttacking() { return _attackActive; } 
+    triggerPlayerAttack,
+    setState: (state) => {
+      if (states[state]) {
+        changeState(state);
+      }
+    },
+    lockMovement: (locked) => {
+      movementLocked = locked;
+    },
+    get isAttacking() { return _attackActive; },
+    get currentState() { return currentState; }
   };
 }

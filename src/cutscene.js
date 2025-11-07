@@ -50,7 +50,7 @@ export class Cutscene {
       },
       {
         dialogue: "Check out this retro beast! Found it at a thrift store... still works perfectly. Press E if you wanna see what's playing.",
-        cameraPosition: { x: -1, y: -5.5, z: -1 }, // Camera higher to see full TV
+        cameraPosition: { x: -1, y: -6.5, z: -0.5 }, // Slightly higher and closer
         cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
         spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
         spotlightIntensity: 120,
@@ -59,7 +59,7 @@ export class Cutscene {
       },
       {
         dialogue: "My battlestation. This is where I bring ideas to life—code, design, everything. Press E to check out my GitHub if you're curious.",
-        cameraPosition: { x: 2, y: -5.5, z: -1 }, // Camera higher to see full computer
+        cameraPosition: { x: 2, y: -6.5, z: -0.5 }, // Slightly higher and closer
         cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightIntensity: 130,
@@ -70,14 +70,14 @@ export class Cutscene {
         dialogue: "These paintings... each one tells a story. They're not just decoration—they're inspiration. Click on 'em to see them up close!",
         cameraPosition: { x: 3, y: -5, z: -3 },
         cameraLookAt: { x: 9.5, y: -7, z: -7 },
-        spotlightTarget: { x: 9.5, y: -7, z: -7 },
-        spotlightIntensity: 180, // Slightly less intensity
-        spotlightAngle: Math.PI / 6, // Wider angle to cover wall
+        spotlightTarget: { x: 9.5, y: -7, z: -7 }, // Middle of the wall with paintings
+        spotlightIntensity: 180,
+        spotlightAngle: Math.PI / 5, // Wider angle to cover both paintings
         paintingsLight: true // Special positioning for paintings
       },
       {
         dialogue: "And this little troublemaker? That's Lumi! She's usually napping, but... try pressing E. She might surprise you.",
-        cameraPosition: { x: -5, y: -7, z: -3 }, // Front view of Lumi
+        cameraPosition: { x: -5, y: -7.5, z: -2 }, // A little down and back
         cameraLookAt: { x: -5, y: -9.3, z: -5 }, // Lumi's actual position
         spotlightTarget: { x: -5, y: -9.3, z: -5 },
         spotlightIntensity: 140,
@@ -89,7 +89,8 @@ export class Cutscene {
         cameraPosition: { x: 0, y: 2, z: 10 },
         cameraLookAt: { x: 0, y: -8, z: 0 },
         spotlightTarget: null,
-        spotlightIntensity: 0
+        spotlightIntensity: 0,
+        showAllSpotlights: true // Special flag to show all spotlights
       }
     ];
     
@@ -170,6 +171,57 @@ export class Cutscene {
     this.spotlight.shadow.camera.far = 50;
     this.scene.add(this.spotlight);
     this.scene.add(this.spotlight.target);
+    
+    // Create additional spotlights for the final scene (all objects lit)
+    this.additionalSpotlights = [];
+    
+    // Record player spotlight (step 1)
+    const recordSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 18, 0.4, 2);
+    recordSpotlight.position.set(-7.25, 1, -8.5);
+    recordSpotlight.target.position.set(-7.25, -9, -8.5);
+    this.scene.add(recordSpotlight);
+    this.scene.add(recordSpotlight.target);
+    this.additionalSpotlights.push(recordSpotlight);
+    
+    // Research table spotlight (step 2)
+    const tableSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 14, 0.4, 2);
+    tableSpotlight.position.set(-2.75 + 3, 1, -9.25 + 8);
+    tableSpotlight.target.position.set(-2.75, -9, -9.25);
+    this.scene.add(tableSpotlight);
+    this.scene.add(tableSpotlight.target);
+    this.additionalSpotlights.push(tableSpotlight);
+    
+    // TV spotlight (step 3)
+    const tvSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 10, 0.4, 2);
+    tvSpotlight.position.set(-1, 3.5, -4.2 + 3);
+    tvSpotlight.target.position.set(-1, -8.5, -4.2);
+    this.scene.add(tvSpotlight);
+    this.scene.add(tvSpotlight.target);
+    this.additionalSpotlights.push(tvSpotlight);
+    
+    // Computer spotlight (step 4)
+    const computerSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 10, 0.4, 2);
+    computerSpotlight.position.set(0.5, 3.3, -4.4 + 3);
+    computerSpotlight.target.position.set(0.5, -8.7, -4.4);
+    this.scene.add(computerSpotlight);
+    this.scene.add(computerSpotlight.target);
+    this.additionalSpotlights.push(computerSpotlight);
+    
+    // Paintings spotlight (step 5)
+    const paintingsSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 5, 0.4, 2);
+    paintingsSpotlight.position.set(9.5 - 4, -3, -7 + 3);
+    paintingsSpotlight.target.position.set(9.5, -7, -7);
+    this.scene.add(paintingsSpotlight);
+    this.scene.add(paintingsSpotlight.target);
+    this.additionalSpotlights.push(paintingsSpotlight);
+    
+    // Lumi spotlight (step 6)
+    const lumiSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 14, 0.4, 2);
+    lumiSpotlight.position.set(-5, -1.3, -5 + 3);
+    lumiSpotlight.target.position.set(-5, -9.3, -5);
+    this.scene.add(lumiSpotlight);
+    this.scene.add(lumiSpotlight.target);
+    this.additionalSpotlights.push(lumiSpotlight);
     
     // Add a front-facing point light to illuminate the player during cutscene
     this.playerLight = new THREE.PointLight(0xffffff, 2, 10);
@@ -253,10 +305,36 @@ export class Cutscene {
       }
     });
     
-    // Hide Lumi during first cutscene step
+    // Hide Lumi during first cutscene step and store her original state
     if (window.lumi && window.lumi.cat) {
+      console.log('Cutscene: Setting up Lumi. Current position:', window.lumi.cat.position);
       this._lumiOriginalVisible = window.lumi.cat.visible;
+      this._lumiOriginalPosition = window.lumi.cat.position.clone();
+      this._lumiOriginalState = window.lumi.currentState;
+      
+      // Move Lumi to spotlight center immediately and lock her there
+      window.lumi.cat.position.set(-5, -9.3, -5);
+      window.lumi.collisionBoxMesh.position.set(-5, -9.3, -5);
+      console.log('Cutscene: Moved Lumi to:', window.lumi.cat.position);
+      
+      // Lock Lumi's movement during cutscene
+      if (window.lumi.lockMovement) {
+        window.lumi.lockMovement(true);
+        console.log('Cutscene: Locked Lumi movement');
+      } else {
+        console.error('Cutscene: lockMovement function not found!');
+      }
+      
+      // Set to sleeping animation
+      if (window.lumi.setState) {
+        window.lumi.setState('sleep'); // Use 'sleep' not 'sleeping'
+        console.log('Cutscene: Set Lumi to sleeping state');
+      }
+      
+      // Hide her for the first step
       window.lumi.cat.visible = false;
+    } else {
+      console.error('Cutscene: window.lumi not found!');
     }
     
     // Make sure fade is transparent
@@ -338,6 +416,8 @@ export class Cutscene {
       const fullText = step.dialogue;
       let charIndex = 0;
       const baseTypeSpeed = 40; // milliseconds per character
+      let typewriterTimeout = null;
+      let isTyping = true;
       
       const getDelay = (char, nextChar) => {
         // Dramatic pauses for punctuation
@@ -355,6 +435,28 @@ export class Cutscene {
         return baseTypeSpeed;
       };
       
+      const completeTyping = () => {
+        if (typewriterTimeout) {
+          clearTimeout(typewriterTimeout);
+        }
+        textDiv.textContent = fullText;
+        continueDiv.style.opacity = '0.7';
+        this.waitingForClick = true;
+        isTyping = false;
+      };
+      
+      // Add click handler to skip typewriter effect
+      const skipHandler = () => {
+        if (isTyping) {
+          completeTyping();
+        }
+      };
+      
+      // Store handler so we can remove it later
+      this._skipTypewriterHandler = skipHandler;
+      document.addEventListener('click', skipHandler);
+      document.addEventListener('touchend', skipHandler);
+      
       const typeWriter = () => {
         if (charIndex < fullText.length) {
           const currentChar = fullText.charAt(charIndex);
@@ -362,11 +464,12 @@ export class Cutscene {
           textDiv.textContent += currentChar;
           charIndex++;
           const delay = getDelay(currentChar, nextChar);
-          setTimeout(typeWriter, delay);
+          typewriterTimeout = setTimeout(typeWriter, delay);
         } else {
           // Typing complete, show continue prompt
           continueDiv.style.opacity = '0.7';
           this.waitingForClick = true;
+          isTyping = false;
         }
       };
       
@@ -421,11 +524,11 @@ export class Cutscene {
         offsetZ = 3; // In front of object
         offsetY = 12; // Above
       }
-      // Paintings: position to light up the wall
+      // Paintings: position to light up the wall directly
       else if (step.paintingsLight) {
-        offsetX = 0; // Center between camera and wall
-        offsetZ = -4; // Between camera and paintings
-        offsetY = 2; // Slightly above eye level
+        offsetX = -4; // More to the left
+        offsetZ = 3; // A little back
+        offsetY = 4; // Higher above
       }
       // Lumi scene: from front
       else if (step.lumiScene) {
@@ -439,17 +542,43 @@ export class Cutscene {
         step.spotlightTarget.y + offsetY,
         step.spotlightTarget.z + offsetZ
       );
+      
+      // Turn off additional spotlights (only use main spotlight for individual scenes)
+      if (this.additionalSpotlights) {
+        this.additionalSpotlights.forEach(light => light.intensity = 0);
+      }
+    } else if (step.showAllSpotlights) {
+      // Final scene: turn on all spotlights
+      this.spotlight.intensity = 0; // Turn off main spotlight
+      
+      if (this.additionalSpotlights) {
+        // Turn on all individual spotlights at reduced intensity
+        this.additionalSpotlights.forEach(light => {
+          light.intensity = 100; // Medium intensity for ambient effect
+        });
+      }
     } else {
       this.spotlight.intensity = 0;
+      if (this.additionalSpotlights) {
+        this.additionalSpotlights.forEach(light => light.intensity = 0);
+      }
     }
   }
 
   nextStep() {
     console.log('Next step called, current:', this.currentStep);
+    
+    // Remove skip typewriter handler from previous step
+    if (this._skipTypewriterHandler) {
+      document.removeEventListener('click', this._skipTypewriterHandler);
+      document.removeEventListener('touchend', this._skipTypewriterHandler);
+      this._skipTypewriterHandler = null;
+    }
+    
     this.currentStep++;
     this.waitingForClick = false;
     
-    // Show Lumi after the first step (she was hidden during player's introduction)
+    // Show Lumi after the first step (she was already positioned at start)
     if (this.currentStep === 1 && window.lumi && window.lumi.cat) {
       window.lumi.cat.visible = true;
     }
@@ -529,14 +658,31 @@ export class Cutscene {
         }
       });
 
-      // Restore Lumi's visibility
+      // Restore Lumi's visibility, position, and state
       if (window.lumi && window.lumi.cat && this._lumiOriginalVisible !== undefined) {
         window.lumi.cat.visible = this._lumiOriginalVisible;
+        if (this._lumiOriginalPosition) {
+          window.lumi.cat.position.copy(this._lumiOriginalPosition);
+        }
+        if (this._lumiOriginalState && window.lumi.setState) {
+          window.lumi.setState(this._lumiOriginalState);
+        }
+        // Unlock movement
+        if (window.lumi.lockMovement) {
+          window.lumi.lockMovement(false);
+        }
       }
 
       // Remove cutscene lights
       this.spotlight.intensity = 0;
       this.scene.remove(this.playerLight);
+      
+      // Turn off additional spotlights
+      if (this.additionalSpotlights) {
+        this.additionalSpotlights.forEach(light => {
+          light.intensity = 0;
+        });
+      }
 
       // Fade back in to game
       this.fadeElement.style.opacity = '0';
