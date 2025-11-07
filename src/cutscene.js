@@ -167,7 +167,7 @@ export class Cutscene {
       ${mobileMediaQuery} {
         .cutscene-dialogue {
           width: 90% !important;
-          bottom: 8% !important;
+          bottom: 3% !important;
           padding: 20px 20px 40px 20px !important;
           font-size: 18px !important;
           line-height: 1.4 !important;
@@ -182,7 +182,7 @@ export class Cutscene {
       @media (max-width: 480px) {
         .cutscene-dialogue {
           width: 95% !important;
-          bottom: 10% !important;
+          bottom: 2% !important;
           padding: 16px 16px 36px 16px !important;
           font-size: 16px !important;
           max-height: 30vh !important;
@@ -639,10 +639,26 @@ export class Cutscene {
     
     // Set camera position immediately
     if (step.cameraPosition) {
+      // Check if mobile and adjust camera for certain scenes
+      const isMobile = window.innerWidth <= 768;
+      let zOffset = 0;
+      
+      // Pull camera back for TV, computer, paintings, and Lumi on mobile
+      if (isMobile) {
+        // TV scene (step 3)
+        if (this.currentStep === 3) zOffset = 1.5;
+        // Computer scene (step 4)
+        else if (this.currentStep === 4) zOffset = 1.5;
+        // Paintings scene (step 5)
+        else if (this.currentStep === 5) zOffset = 1;
+        // Lumi scene (step 6)
+        else if (this.currentStep === 6) zOffset = 1;
+      }
+      
       this.camera.position.set(
         step.cameraPosition.x,
         step.cameraPosition.y,
-        step.cameraPosition.z
+        step.cameraPosition.z + zOffset
       );
     }
     
