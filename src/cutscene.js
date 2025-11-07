@@ -432,12 +432,23 @@ export class Cutscene {
     this._dragThreshold = 10; // pixels of movement to count as drag
     this._dragStartX = 0;
     this._dragStartY = 0;
+    this._lastClickTime = 0;
+    this._clickDebounceDelay = 300; // milliseconds to wait between clicks
     
     // Add click listener for progressing cutscene (only on dialogue box)
     this.clickHandler = (e) => {
+      const now = Date.now();
+      
+      // Debounce: ignore clicks that happen too quickly after the last one
+      if (now - this._lastClickTime < this._clickDebounceDelay) {
+        console.log('Click ignored - too soon after last click');
+        return;
+      }
+      
       // Only progress if clicking on dialogue and not dragging
       if (!this._isDragging && this.waitingForClick) {
         console.log('Click detected on dialogue, progressing...');
+        this._lastClickTime = now;
         this.nextStep();
       }
     };
@@ -585,17 +596,27 @@ export class Cutscene {
         isTyping = false;
       };
       
-      // Add click handler to skip typewriter effect
-      const skipHandler = () => {
-        if (isTyping) {
+      // Add click handler to skip typewriter effect (only on dialogue, not when dragging)
+      const skipHandler = (e) => {
+        const now = Date.now();
+        
+        // Debounce: ignore clicks that happen too quickly
+        if (now - this._lastClickTime < this._clickDebounceDelay) {
+          console.log('Skip click ignored - too soon after last click');
+          return;
+        }
+        
+        // Only skip if not dragging and clicking on dialogue
+        if (isTyping && !this._isDragging) {
+          this._lastClickTime = now;
           completeTyping();
         }
       };
       
       // Store handler so we can remove it later
       this._skipTypewriterHandler = skipHandler;
-      document.addEventListener('click', skipHandler);
-      document.addEventListener('touchend', skipHandler);
+      this.dialogueElement.addEventListener('click', skipHandler);
+      this.dialogueElement.addEventListener('touchend', skipHandler);
       
       const typeWriter = () => {
         if (charIndex < fullText.length) {
@@ -710,8 +731,8 @@ export class Cutscene {
     
     // Remove skip typewriter handler from previous step
     if (this._skipTypewriterHandler) {
-      document.removeEventListener('click', this._skipTypewriterHandler);
-      document.removeEventListener('touchend', this._skipTypewriterHandler);
+      this.dialogueElement.removeEventListener('click', this._skipTypewriterHandler);
+      this.dialogueElement.removeEventListener('touchend', this._skipTypewriterHandler);
       this._skipTypewriterHandler = null;
     }
     
@@ -778,9 +799,23 @@ export class Cutscene {
     // Remove camera mouse pan
     this._removeCameraMousePan();
     
-    // Remove click listeners
-    document.removeEventListener('click', this.clickHandler);
-    document.removeEventListener('touchend', this.clickHandler);
+    // Remove click and drag listeners from dialogue element
+    if (this.clickHandler) {
+      this.dialogueElement.removeEventListener('click', this.clickHandler);
+      this.dialogueElement.removeEventListener('touchend', this.clickHandler);
+    }
+    if (this.dragStartHandler) {
+      this.dialogueElement.removeEventListener('mousedown', this.dragStartHandler);
+      this.dialogueElement.removeEventListener('touchstart', this.dragStartHandler);
+    }
+    if (this.dragMoveHandler) {
+      this.dialogueElement.removeEventListener('mousemove', this.dragMoveHandler);
+      this.dialogueElement.removeEventListener('touchmove', this.dragMoveHandler);
+    }
+    if (this.dragEndHandler) {
+      this.dialogueElement.removeEventListener('mouseup', this.dragEndHandler);
+      this.dialogueElement.removeEventListener('touchend', this.dragEndHandler);
+    }
 
     // Fade out
     this.fadeElement.style.opacity = '1';
