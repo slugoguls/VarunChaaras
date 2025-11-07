@@ -48,6 +48,11 @@ loadingManager.onLoad = () => {
           event.stopPropagation();
           event.preventDefault();
           
+          // Show menu NOW (after user clicks)
+          if (menu && menu.menuAssetsReady && !menu.menuActive) {
+            menu._showMenu();
+          }
+          
           // Start menu audio
           if (menu && menu.menuAudio) {
             menu.menuAudio.play().catch(err => {

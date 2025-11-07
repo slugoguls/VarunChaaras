@@ -15,6 +15,7 @@ export class MenuScreen {
     this.onStart = onStart;
     this.interactionsEnabled = false; // Disable interactions initially
     this.menuVisible = false; // Track if menu is actually visible to user
+    this.menuAssetsReady = false; // Track if menu assets are loaded
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
     const aspect = window.innerWidth / window.innerHeight;
@@ -27,8 +28,9 @@ export class MenuScreen {
     const onAssetLoaded = () => {
       this._assetsLoaded++;
       if (this._assetsLoaded >= this._assetsToLoad) {
-        // Menu assets ready, show menu (loading screen will be hidden by main loading manager)
-        this._showMenu();
+        // Menu assets ready, but DON'T show menu yet
+        // Wait for user to click "Click to start" first
+        this.menuAssetsReady = true;
       }
     };
 
