@@ -143,7 +143,7 @@ export class Cutscene {
     this.dialogueElement = document.createElement('div');
     this.dialogueElement.style.position = 'fixed';
     this.dialogueElement.style.left = '50%';
-    this.dialogueElement.style.bottom = '7%';
+    this.dialogueElement.style.bottom = '5%';
     this.dialogueElement.style.transform = 'translateX(-50%)';
     this.dialogueElement.style.width = '80%';
     this.dialogueElement.style.maxWidth = '800px';
@@ -157,6 +157,45 @@ export class Cutscene {
     this.dialogueElement.style.display = 'none';
     this.dialogueElement.style.zIndex = '9999';
     this.dialogueElement.style.cursor = 'pointer';
+    this.dialogueElement.style.pointerEvents = 'auto';
+    this.dialogueElement.style.boxSizing = 'border-box';
+    
+    // Mobile responsive styling
+    const mobileMediaQuery = '@media (max-width: 768px)';
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      ${mobileMediaQuery} {
+        .cutscene-dialogue {
+          width: 90% !important;
+          bottom: 8% !important;
+          padding: 20px 20px 40px 20px !important;
+          font-size: 18px !important;
+          line-height: 1.4 !important;
+          max-height: 35vh !important;
+          overflow-y: auto !important;
+        }
+        .cutscene-dialogue #continue-text {
+          font-size: 11px !important;
+          bottom: 12px !important;
+        }
+      }
+      @media (max-width: 480px) {
+        .cutscene-dialogue {
+          width: 95% !important;
+          bottom: 10% !important;
+          padding: 16px 16px 36px 16px !important;
+          font-size: 16px !important;
+          max-height: 30vh !important;
+        }
+        .cutscene-dialogue #continue-text {
+          font-size: 10px !important;
+          bottom: 10px !important;
+        }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+    this.dialogueElement.classList.add('cutscene-dialogue');
+    
     document.body.appendChild(this.dialogueElement);
   }
 
@@ -238,9 +277,11 @@ export class Cutscene {
     });
   }
 
-  // Camera mouse pan effect
+  // Camera mouse/touch pan effect
   _setupCameraMousePan() {
     if (this._mousePanHandler) return; // Only set up once
+    
+    // Mouse handler for desktop
     this._mousePanHandler = (e) => {
       if (!this.isPlaying) return;
       // Get normalized mouse position (-1 to 1)
@@ -249,7 +290,45 @@ export class Cutscene {
       this._mousePanX = x;
       this._mousePanY = y;
     };
+    
+    // Touch drag handler for mobile
+    this._touchStartHandler = (e) => {
+      if (!this.isPlaying) return;
+      // Don't interfere if touching the dialogue box
+      if (e.target.closest('.cutscene-dialogue')) return;
+      
+      this._touchStartX = e.touches[0].clientX;
+      this._touchStartY = e.touches[0].clientY;
+      this._touchStartPanX = this._mousePanX || 0;
+      this._touchStartPanY = this._mousePanY || 0;
+    };
+    
+    this._touchMoveHandler = (e) => {
+      if (!this.isPlaying || !this._touchStartX) return;
+      if (e.target.closest('.cutscene-dialogue')) return;
+      
+      e.preventDefault(); // Prevent scrolling while dragging
+      
+      const deltaX = e.touches[0].clientX - this._touchStartX;
+      const deltaY = e.touches[0].clientY - this._touchStartY;
+      
+      // Convert touch delta to normalized pan values (-1 to 1)
+      // Sensitivity factor to control how much movement affects camera
+      const sensitivity = 0.003;
+      this._mousePanX = Math.max(-1, Math.min(1, this._touchStartPanX + deltaX * sensitivity));
+      this._mousePanY = Math.max(-1, Math.min(1, this._touchStartPanY - deltaY * sensitivity));
+    };
+    
+    this._touchEndHandler = () => {
+      this._touchStartX = null;
+      this._touchStartY = null;
+    };
+    
     window.addEventListener('mousemove', this._mousePanHandler);
+    window.addEventListener('touchstart', this._touchStartHandler, { passive: false });
+    window.addEventListener('touchmove', this._touchMoveHandler, { passive: false });
+    window.addEventListener('touchend', this._touchEndHandler);
+    
     this._mousePanX = 0;
     this._mousePanY = 0;
   }
@@ -258,6 +337,14 @@ export class Cutscene {
     if (this._mousePanHandler) {
       window.removeEventListener('mousemove', this._mousePanHandler);
       this._mousePanHandler = null;
+    }
+    if (this._touchStartHandler) {
+      window.removeEventListener('touchstart', this._touchStartHandler);
+      window.removeEventListener('touchmove', this._touchMoveHandler);
+      window.removeEventListener('touchend', this._touchEndHandler);
+      this._touchStartHandler = null;
+      this._touchMoveHandler = null;
+      this._touchEndHandler = null;
     }
   }
 
@@ -340,15 +427,68 @@ export class Cutscene {
     // Make sure fade is transparent
     this.fadeElement.style.opacity = '0';
     
-    // Add click listener for progressing cutscene
-    this.clickHandler = () => {
-      console.log('Click detected, waiting for click:', this.waitingForClick);
-      if (this.waitingForClick) {
+    // Track if user is dragging (to prevent skip on drag)
+    this._isDragging = false;
+    this._dragThreshold = 10; // pixels of movement to count as drag
+    this._dragStartX = 0;
+    this._dragStartY = 0;
+    
+    // Add click listener for progressing cutscene (only on dialogue box)
+    this.clickHandler = (e) => {
+      // Only progress if clicking on dialogue and not dragging
+      if (!this._isDragging && this.waitingForClick) {
+        console.log('Click detected on dialogue, progressing...');
         this.nextStep();
       }
     };
-    document.addEventListener('click', this.clickHandler);
-    document.addEventListener('touchend', this.clickHandler);
+    
+    // Track drag start
+    this.dragStartHandler = (e) => {
+      this._isDragging = false;
+      if (e.type === 'mousedown') {
+        this._dragStartX = e.clientX;
+        this._dragStartY = e.clientY;
+      } else if (e.type === 'touchstart') {
+        this._dragStartX = e.touches[0].clientX;
+        this._dragStartY = e.touches[0].clientY;
+      }
+    };
+    
+    // Track if moved enough to be a drag
+    this.dragMoveHandler = (e) => {
+      let currentX, currentY;
+      if (e.type === 'mousemove') {
+        currentX = e.clientX;
+        currentY = e.clientY;
+      } else if (e.type === 'touchmove') {
+        currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY;
+      }
+      
+      const deltaX = Math.abs(currentX - this._dragStartX);
+      const deltaY = Math.abs(currentY - this._dragStartY);
+      
+      if (deltaX > this._dragThreshold || deltaY > this._dragThreshold) {
+        this._isDragging = true;
+      }
+    };
+    
+    // Reset drag flag after a short delay
+    this.dragEndHandler = () => {
+      setTimeout(() => {
+        this._isDragging = false;
+      }, 100);
+    };
+    
+    // Add listeners to dialogue element only
+    this.dialogueElement.addEventListener('click', this.clickHandler);
+    this.dialogueElement.addEventListener('touchend', this.clickHandler);
+    this.dialogueElement.addEventListener('mousedown', this.dragStartHandler);
+    this.dialogueElement.addEventListener('touchstart', this.dragStartHandler);
+    this.dialogueElement.addEventListener('mousemove', this.dragMoveHandler);
+    this.dialogueElement.addEventListener('touchmove', this.dragMoveHandler);
+    this.dialogueElement.addEventListener('mouseup', this.dragEndHandler);
+    this.dialogueElement.addEventListener('touchend', this.dragEndHandler);
     
     // Show first dialogue immediately
     this.showCurrentStep();
