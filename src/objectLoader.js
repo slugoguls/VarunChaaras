@@ -137,15 +137,7 @@ export async function loadCriticalObjects(scene, colliders, onProgress = null) {
   return addObject;
 }
 
-export async function loadHeavyObjects(scene, colliders, addObjectFn) {
-  // If addObjectFn is not provided, we can't easily reuse the logic without duplicating it.
-  // But since we are in the same module, we can just extract addObject to a module-level function or pass it.
-  // For now, I'll assume the user calls loadCriticalObjects first and we can't easily share the inner function unless I refactor.
-  // Let's refactor slightly to make addObject a standalone helper if possible, OR just duplicate the simple logic, OR pass it back.
-  
-  // Actually, I'll just copy the addObject logic here for simplicity to avoid massive refactor risk.
-  // Or better, I'll make addObject a module-level function.
-}
+
 
 // Helper for adding objects (internal)
 async function addObjectInternal(scene, colliders, { path, position, scale, rotation = new THREE.Euler(0,0,0), customCollider = null, addToColliders = true }, onProgress) {
