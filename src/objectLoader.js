@@ -12,7 +12,7 @@ function getMeshBoundingBox(obj) {
   return box;
 }
 
-export async function loadAllObjects(scene, colliders, onProgress = null) {
+export async function loadCriticalObjects(scene, colliders, onProgress = null) {
 
   async function addObject({ path, position, scale, rotation = new THREE.Euler(0,0,0), customCollider = null, addToColliders = true }) {
     try {
@@ -97,7 +97,7 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
     }
   }
 
-  // --- Objects ---
+  // --- Critical Objects (Interactions & Main Room) ---
   await addObject({
   path: "Models/Table3.glb",
   position: new THREE.Vector3(0, -10, -4),
@@ -126,20 +126,69 @@ export async function loadAllObjects(scene, colliders, onProgress = null) {
 
   await addObject({ path: "Models/computer2.glb", position: new THREE.Vector3(0.5, -8.7, -4.4), scale: new THREE.Vector3(2.25, 2.25, 2.25), rotation: new THREE.Euler(0, Math.PI/2 , 0), addToColliders: false  });
 
-  
-
-  await addObject({ path: "Models/record_table.glb", position: new THREE.Vector3(-5.8, -10, -8.5), scale: new THREE.Vector3(0.1, 0.1, 0.1) });
   await addObject({ path: "Models/research_table.glb", position: new THREE.Vector3(-2.75, -10, -9.25), scale: new THREE.Vector3(1.5,1.5, 1.5),  rotation: new THREE.Euler(0, -Math.PI/2, 0) });
   await addObject({ path: "Models/record_player.glb", position: new THREE.Vector3(-7.25, -9, -8.5), scale: new THREE.Vector3(3.5, 3.5, 3.5) });
   await addObject({ path: "Models/side_table.glb", position: new THREE.Vector3(-7.25, -10, -8.5), scale: new THREE.Vector3(1.5, 3, 1.5) });
 
   await addObject({ path: "Models/longlamp.glb", position: new THREE.Vector3(-9, -8, -1), scale: new THREE.Vector3(1, 1.5, 1), rotation: new THREE.Euler(0, 0, 0) });
   await addObject({ path: "Models/lamp.glb", position: new THREE.Vector3(7.5, -4.5, -9.75), scale: new THREE.Vector3(1, 1, 1), rotation: new THREE.Euler(0, Math.PI/2, Math.PI/4) });
+  
+  // Return the addObject function so we can use it in loadHeavyObjects
+  return addObject;
+}
 
-  await addObject({ path: "Models/beanbag.glb", position: new THREE.Vector3(5, -10, 2.5), scale: new THREE.Vector3(5, 5, 5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
-  await addObject({ path: "Models/bedc.glb", position: new THREE.Vector3(-9, -10, -6.75), scale: new THREE.Vector3(1, 1, 1.5), rotation: new THREE.Euler(0, -Math.PI, 0)  });
-  await addObject({ path: "Models/crafting table.glb", position: new THREE.Vector3(-9.9, -8.25, -3.25), scale: new THREE.Vector3(0.15, 0.15, 0.15), rotation: new THREE.Euler(0, 0, 0)  });
-  await addObject({ path: "Models/redstoneLamp.glb", position: new THREE.Vector3(9.25, -10, -9), scale: new THREE.Vector3(0.025, 0.025, 0.025), rotation: new THREE.Euler(0, -Math.PI/2, 0)  });
-  await addObject({ path: "Models/side_table.glb", position: new THREE.Vector3(5.5, -9.75, 0.25), scale: new THREE.Vector3(1, 2, 1)  });
-  await addObject({ path: "Models/tableLamp.glb", position: new THREE.Vector3(5, -9.25, -0.2), scale: new THREE.Vector3(1, 1, 1)  });
+export async function loadHeavyObjects(scene, colliders, addObjectFn) {
+  // If addObjectFn is not provided, we can't easily reuse the logic without duplicating it.
+  // But since we are in the same module, we can just extract addObject to a module-level function or pass it.
+  // For now, I'll assume the user calls loadCriticalObjects first and we can't easily share the inner function unless I refactor.
+  // Let's refactor slightly to make addObject a standalone helper if possible, OR just duplicate the simple logic, OR pass it back.
+  
+  // Actually, I'll just copy the addObject logic here for simplicity to avoid massive refactor risk.
+  // Or better, I'll make addObject a module-level function.
+}
+
+// Helper for adding objects (internal)
+async function addObjectInternal(scene, colliders, { path, position, scale, rotation = new THREE.Euler(0,0,0), customCollider = null, addToColliders = true }, onProgress) {
+    try {
+      const { model, collider } = await loadGLB(path, { position, scale, rotation });
+      scene.add(model);
+      allObjects[path] = model;
+      
+      // (TV logic omitted as it's specific to retroTv which is critical)
+
+      let colliderModel = model;
+      let box = null;
+
+      if (customCollider) {
+        colliderModel = customCollider(model);
+        scene.add(colliderModel);
+        box = getMeshBoundingBox(colliderModel);
+      } else if (collider) {
+        box = collider; 
+        const helper = new THREE.Box3Helper(box, 0xff0000);
+        helper.visible = false; 
+        scene.add(helper);
+      } else {
+        box = getMeshBoundingBox(model);
+      }
+
+      if (addToColliders) {
+        colliders.push({ model: colliderModel, box });
+      }
+      if (onProgress) onProgress(path, true);
+    } catch (err) {
+      if (onProgress) onProgress(path, false);
+    }
+}
+
+export async function loadHeavyObjects(scene, colliders, onProgress = null) {
+  // Heavy objects (Lazy loaded)
+  await addObjectInternal(scene, colliders, { path: "Models/record_table.glb", position: new THREE.Vector3(-5.8, -10, -8.5), scale: new THREE.Vector3(0.1, 0.1, 0.1) }, onProgress);
+  
+  await addObjectInternal(scene, colliders, { path: "Models/beanbag.glb", position: new THREE.Vector3(5, -10, 2.5), scale: new THREE.Vector3(5, 5, 5), rotation: new THREE.Euler(0, -Math.PI, 0)  }, onProgress);
+  await addObjectInternal(scene, colliders, { path: "Models/bedc.glb", position: new THREE.Vector3(-9, -10, -6.75), scale: new THREE.Vector3(1, 1, 1.5), rotation: new THREE.Euler(0, -Math.PI, 0)  }, onProgress);
+  await addObjectInternal(scene, colliders, { path: "Models/crafting table.glb", position: new THREE.Vector3(-9.9, -8.25, -3.25), scale: new THREE.Vector3(0.15, 0.15, 0.15), rotation: new THREE.Euler(0, 0, 0)  }, onProgress);
+  await addObjectInternal(scene, colliders, { path: "Models/redstoneLamp.glb", position: new THREE.Vector3(9.25, -10, -9), scale: new THREE.Vector3(0.025, 0.025, 0.025), rotation: new THREE.Euler(0, -Math.PI/2, 0)  }, onProgress);
+  await addObjectInternal(scene, colliders, { path: "Models/side_table.glb", position: new THREE.Vector3(5.5, -9.75, 0.25), scale: new THREE.Vector3(1, 2, 1)  }, onProgress);
+  await addObjectInternal(scene, colliders, { path: "Models/tableLamp.glb", position: new THREE.Vector3(5, -9.25, -0.2), scale: new THREE.Vector3(1, 1, 1)  }, onProgress);
 }
