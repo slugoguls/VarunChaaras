@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { createRoom, setRoomTextureLoadingManager } from "./room.js";
 import { createCamera } from "./camera.js";
 import { Player } from "./player.js";
-import { loadAllObjects, allObjects } from "./objectLoader.js";
+import { loadCriticalObjects, loadHeavyObjects, allObjects } from "./objectLoader.js";
 import { loadAllPaintings, setPaintingLoadingManager } from "./paintingLoader.js";
 import { createLumiCat } from "./lumiCat.js";
 import { setFrame, setTextureLoadingManager } from "./spriteLoader.js";
@@ -12,8 +12,12 @@ import { MenuScreen, setMenuLoadingManager } from "./menu.js";
 import { setLoadingManager } from "./loadGLB.js";
 import { Cutscene } from "./cutscene.js";
 
-// === LOADING MANAGER ===
-const loadingManager = new THREE.LoadingManager();
+// === LOADING MANAGERS ===
+// Critical manager for Menu, UI, and essential room elements
+const criticalManager = new THREE.LoadingManager();
+// Background manager for heavy assets (large GLBs, audio, paintings)
+const backgroundManager = new THREE.LoadingManager();
+
 const loadingScreen = document.getElementById('loading-screen');
 const loadingText = document.querySelector('.loading-text');
 const startPrompt = document.querySelector('.start-prompt');
@@ -22,15 +26,16 @@ let assetsLoaded = false;
 let sceneReady = false;
 let userStarted = false;
 
-loadingManager.onProgress = (url, loaded, total) => {
+// Only show progress for critical assets
+criticalManager.onProgress = (url, loaded, total) => {
   const progress = Math.round((loaded / total) * 100);
   if (loadingText) {
     loadingText.textContent = `Loading... ${progress}%`;
   }
 };
 
-loadingManager.onLoad = () => {
-  // All assets downloaded
+criticalManager.onLoad = () => {
+  // Critical assets downloaded
   assetsLoaded = true;
   if (loadingText) {
     loadingText.textContent = `Loading... 100%`;
@@ -82,12 +87,12 @@ loadingManager.onLoad = () => {
   }, 500);
 };
 
-// Initialize all loaders with the loading manager
-setLoadingManager(loadingManager);
-setTextureLoadingManager(loadingManager);
-setRoomTextureLoadingManager(loadingManager);
-setPaintingLoadingManager(loadingManager);
-setMenuLoadingManager(loadingManager);
+// Initialize loaders with the CRITICAL manager first
+setLoadingManager(criticalManager);
+setTextureLoadingManager(criticalManager);
+setRoomTextureLoadingManager(criticalManager);
+setMenuLoadingManager(criticalManager);
+// Note: Painting manager will be set to background later
 
 let lumi;
 const colliders = [];
@@ -149,9 +154,11 @@ const menu = new MenuScreen((cutsceneSong) => {
 
 // === AUDIO ===
 const sound = new THREE.PositionalAudio(listener);
-const audioLoader = new THREE.AudioLoader(loadingManager);
+// Use background manager for heavy audio
+const audioLoader = new THREE.AudioLoader(backgroundManager);
 let isPlaying = false;
 
+// Load audio in background (non-blocking for start screen)
 audioLoader.load('sounds/Bromeliad.mp3', function(buffer) {
     sound.setBuffer(buffer);
     sound.setLoop(true);
@@ -210,7 +217,17 @@ const room = createRoom(roomSize, 0xF5F5DC, true);
 scene.add(room);
 
 // === OBJECTS ===
-await loadAllObjects(scene, colliders);
+// Load critical objects first (blocks until done)
+await loadCriticalObjects(scene, colliders);
+
+// Now switch to background manager for heavy assets
+setLoadingManager(backgroundManager);
+setPaintingLoadingManager(backgroundManager);
+
+// Start loading heavy objects in background (do NOT await)
+loadHeavyObjects(scene, colliders).then(() => {
+  console.log("Heavy objects loaded");
+});
 
 const ui = createUIElements(scene);
 const recordPlayer = allObjects["Models/record_player.glb"];
@@ -223,7 +240,10 @@ const table3 = allObjects["Models/Table3.glb"];
 
 // === PAINTINGS ===
 const paintings = [];
-await loadAllPaintings(scene, paintings);
+// Load paintings in background (do NOT await)
+loadAllPaintings(scene, paintings).then(() => {
+  console.log("Paintings loaded");
+});
 
 // Create a static camera that looks at the retro TV perpendicularly
 // Compute an adaptive distance from the TV bounding box so it always fits in view (mobile-aware)
