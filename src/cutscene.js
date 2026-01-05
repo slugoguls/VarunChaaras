@@ -41,7 +41,7 @@ export class Cutscene {
         spotlightAngle: Math.PI / 18 // Very small circle on record player
       },
       {
-        dialogue: "The desk. Where I—where things get built. Code compiled, projects finished... supposedly. Everything works as intended here. Nothing out of place.",
+        dialogue: "The desk. Where I.. where things get built. Code compiled, projects finished... supposedly. Everything works as intended here. Nothing out of place.",
         cameraPosition: { x: -5.5, y: -7, z: -4 }, // Pulled left a bit
         cameraLookAt: { x: -2.75, y: -8.5, z: -9.25 },
         spotlightTarget: { x: -2.75, y: -9, z: -9.25 },
@@ -51,16 +51,16 @@ export class Cutscene {
       {
         dialogue: "A CRT from another era. Still functional, like everything else in this space. Press E to see what plays. It's... familiar content.",
         cameraPosition: { x: -1, y: -6.5, z: -0.5 }, // Slightly higher and closer
-        cameraLookAt: { x: -1, y: -8.5, z: -4.2 },
+        cameraLookAt: { x: -1, y: -8.0, z: -4.2 },
         spotlightTarget: { x: -1, y: -8.5, z: -4.2 },
         spotlightIntensity: 120,
         spotlightAngle: Math.PI / 10,
         spotlightFromAboveFront: true // Spotlight from above and front
       },
       {
-        dialogue: "The setup. Where the work happens—development, design, the usual. Press E to check the GitHub. All the commits are there. Everything documented. As it should be.",
-        cameraPosition: { x: 2, y: -6.5, z: -0.5 }, // Slightly higher and closer
-        cameraLookAt: { x: 0.5, y: -8.7, z: -4.4 },
+        dialogue: "The setup. Where the work happens, development, design, the usual. Press E to check the GitHub. All the commits are there. Everything documented. As it should be.",
+        cameraPosition: { x: 1, y: -6.5, z: -0.5 }, // Slightly higher and closer
+        cameraLookAt: { x: 0.5, y: -8.0, z: -4.4 },
         spotlightTarget: { x: 0.5, y: -8.7, z: -4.4 },
         spotlightIntensity: 130,
         spotlightAngle: Math.PI / 10,
@@ -86,11 +86,12 @@ export class Cutscene {
       },
       {
         dialogue: "That's everything. WASD to move. Interact with whatever catches your eye. This is the space. Your experience. Make yourself comfortable.",
-        cameraPosition: { x: 0, y: 2, z: 10 },
-        cameraLookAt: { x: 0, y: -8, z: 0 },
-        spotlightTarget: null,
-        spotlightIntensity: 0,
-        showAllSpotlights: true // Special flag to show all spotlights
+        cameraPosition: { x: 0, y: -4, z: 6 },
+        cameraLookAt: { x: 0, y: -9, z: 0 },
+        spotlightTarget: { x: 0, y: -9, z: 0 },
+        spotlightIntensity: 150,
+        spotlightAngle: Math.PI / 12, // Smaller circle focusing on player
+        centerSpotlight: true // Spotlight from center
       }
     ];
     
@@ -546,6 +547,11 @@ export class Cutscene {
   showCurrentStep() {
     const step = this.steps[this.currentStep];
     console.log('Showing step', this.currentStep, step);
+    // Hide Lumi for the final dialogue step
+    if (this.currentStep === this.steps.length - 1 && window.lumi && window.lumi.cat) {
+      window.lumi.cat.visible = false;
+      console.log('Cutscene: Hiding Lumi for final dialogue');
+    }
     if (step.dialogue) {
       // Create dialogue container with empty text div for typewriter effect
       this.dialogueElement.innerHTML = `
