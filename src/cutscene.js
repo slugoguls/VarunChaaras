@@ -202,7 +202,7 @@ export class Cutscene {
 
   createSpotlight() {
     // Bright spotlight from above - smaller cone angle for tighter radius
-    this.spotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 8, 0.5, 2);
+    this.spotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 8, 0.5, 2);
     this.spotlight.position.set(0, 10, 0);
     this.spotlight.castShadow = true;
     this.spotlight.shadow.mapSize.width = 2048; // Higher resolution shadows
@@ -216,7 +216,7 @@ export class Cutscene {
     this.additionalSpotlights = [];
     
     // Record player spotlight (step 1)
-    const recordSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 18, 0.4, 2);
+    const recordSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 18, 0.4, 2);
     recordSpotlight.position.set(-7.25, 1, -8.5);
     recordSpotlight.target.position.set(-7.25, -9, -8.5);
     this.scene.add(recordSpotlight);
@@ -224,7 +224,7 @@ export class Cutscene {
     this.additionalSpotlights.push(recordSpotlight);
     
     // Research table spotlight (step 2)
-    const tableSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 14, 0.4, 2);
+    const tableSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 14, 0.4, 2);
     tableSpotlight.position.set(-2.75 + 3, 1, -9.25 + 8);
     tableSpotlight.target.position.set(-2.75, -9, -9.25);
     this.scene.add(tableSpotlight);
@@ -232,7 +232,7 @@ export class Cutscene {
     this.additionalSpotlights.push(tableSpotlight);
     
     // TV spotlight (step 3)
-    const tvSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 10, 0.4, 2);
+    const tvSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 10, 0.4, 2);
     tvSpotlight.position.set(-1, 3.5, -4.2 + 3);
     tvSpotlight.target.position.set(-1, -8.5, -4.2);
     this.scene.add(tvSpotlight);
@@ -240,7 +240,7 @@ export class Cutscene {
     this.additionalSpotlights.push(tvSpotlight);
     
     // Computer spotlight (step 4)
-    const computerSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 10, 0.4, 2);
+    const computerSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 10, 0.4, 2);
     computerSpotlight.position.set(0.5, 3.3, -4.4 + 3);
     computerSpotlight.target.position.set(0.5, -8.7, -4.4);
     this.scene.add(computerSpotlight);
@@ -248,7 +248,7 @@ export class Cutscene {
     this.additionalSpotlights.push(computerSpotlight);
     
     // Paintings spotlight (step 5)
-    const paintingsSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 5, 0.4, 2);
+    const paintingsSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 5, 0.4, 2);
     paintingsSpotlight.position.set(9.5 - 4, -3, -7 + 3);
     paintingsSpotlight.target.position.set(9.5, -7, -7);
     this.scene.add(paintingsSpotlight);
@@ -256,7 +256,7 @@ export class Cutscene {
     this.additionalSpotlights.push(paintingsSpotlight);
     
     // Lumi spotlight (step 6)
-    const lumiSpotlight = new THREE.SpotLight(0xffffff, 0, 35, Math.PI / 14, 0.4, 2);
+    const lumiSpotlight = new THREE.SpotLight(0xffd679, 0, 35, Math.PI / 14, 0.4, 2);
     lumiSpotlight.position.set(-5, -1.3, -5 + 3);
     lumiSpotlight.target.position.set(-5, -9.3, -5);
     this.scene.add(lumiSpotlight);
@@ -264,7 +264,7 @@ export class Cutscene {
     this.additionalSpotlights.push(lumiSpotlight);
     
     // Add a front-facing point light to illuminate the player during cutscene
-    this.playerLight = new THREE.PointLight(0xffffff, 2, 10);
+    this.playerLight = new THREE.PointLight(0xffd679, 2, 10);
     this.playerLight.position.set(0, -8, 5);
     this.playerLight.castShadow = true; // Enable shadows for player light
     this.scene.add(this.playerLight);
@@ -816,6 +816,31 @@ export class Cutscene {
   end() {
     console.log('Cutscene ending...');
     this.isPlaying = false;
+
+    // Fade out spotlight audio
+    if (spotlightAudio && spotlightAudio.isPlaying) {
+      const audioToFade = spotlightAudio;
+      const initialVolume = audioToFade.getVolume();
+      const fadeDuration = 10000; // 10 seconds
+      const startTime = Date.now();
+      
+      const fadeInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= fadeDuration) {
+          audioToFade.setVolume(0);
+          audioToFade.stop();
+          clearInterval(fadeInterval);
+        } else {
+          const progress = elapsed / fadeDuration;
+          if (audioToFade.isPlaying) {
+            audioToFade.setVolume(initialVolume * (1 - progress));
+          } else {
+            clearInterval(fadeInterval);
+          }
+        }
+      }, 50);
+    }
+
     this.dialogueElement.style.display = 'none';
 
     // Remove camera mouse pan

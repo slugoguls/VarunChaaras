@@ -140,10 +140,25 @@ const menu = new MenuScreen((cutsceneSong) => {
     // After cutscene completes, start the game
     gameStarted = true;
     cutscenePlaying = false;
-    // Stop cutscene song
+    // Stop cutscene song with fade out
     if (cutsceneSong) {
-      cutsceneSong.pause();
-      cutsceneSong.currentTime = 0;
+      const startVolume = cutsceneSong.volume;
+      const fadeDuration = 2000;
+      const startTime = Date.now();
+      
+      const songFadeInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = elapsed / fadeDuration;
+        
+        if (progress >= 1) {
+          cutsceneSong.volume = 0;
+          cutsceneSong.pause();
+          cutsceneSong.currentTime = 0;
+          clearInterval(songFadeInterval);
+        } else {
+          cutsceneSong.volume = Math.max(0, startVolume * (1 - progress));
+        }
+      }, 50);
     }
     // Enable joystick when game starts (it will show on touch)
     if (joystick) {
@@ -367,6 +382,31 @@ function toggleFullscreen() {
   }
 }
 
+let fadeInterval = null;
+const defaultVolume = 0.8;
+
+function fadeOutAudio(audio, duration = 1000) {
+  if (fadeInterval) clearInterval(fadeInterval);
+  
+  const startVolume = audio.getVolume();
+  const startTime = Date.now();
+  
+  fadeInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const progress = elapsed / duration;
+    
+    if (progress >= 1) {
+      audio.setVolume(0);
+      audio.pause();
+      audio.setVolume(defaultVolume); // Reset for next play
+      clearInterval(fadeInterval);
+      fadeInterval = null;
+    } else {
+      audio.setVolume(startVolume * (1 - progress));
+    }
+  }, 50);
+}
+
 let canInteractWithRecordPlayer = false;
 let canInteractWithResearchTable = false;
 let canInteractWithTable2 = false;
@@ -384,9 +424,14 @@ window.addEventListener("keydown", (e) => {
   // Record player interaction
   if (e.key.toLowerCase() === "e" && canInteractWithRecordPlayer) {
     if (isPlaying) {
-      sound.pause();
+      fadeOutAudio(sound, 2000);
       isPlaying = false;
     } else {
+      if (fadeInterval) {
+        clearInterval(fadeInterval);
+        fadeInterval = null;
+      }
+      sound.setVolume(defaultVolume);
       sound.play();
       isPlaying = true;
     }
@@ -450,9 +495,14 @@ window.addEventListener("touchend", (e) => {
     
     if (canInteractWithRecordPlayer) {
       if (isPlaying) {
-        sound.pause();
+        fadeOutAudio(sound, 2000);
         isPlaying = false;
       } else {
+        if (fadeInterval) {
+          clearInterval(fadeInterval);
+          fadeInterval = null;
+        }
+        sound.setVolume(defaultVolume);
         sound.play();
         isPlaying = true;
       }
