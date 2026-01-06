@@ -2,12 +2,24 @@ import * as THREE from "three";
 import { createSprite, setFrame, loadSpriteSheet } from "./spriteLoader.js";
 
 export class Player {
-  constructor(boundary, width = 1, height = 1, joystick = null) {
+  constructor(boundary, width = 1, height = 1, joystick = null, audioListener = null) {
     this.boundary = boundary;
     this.joystick = joystick;
     
     // Movement keys
     this.keys = { w: false, a: false, s: false, d: false };
+
+    // Audio setup
+    this.walkingAudio = null;
+    if (audioListener) {
+      this.walkingAudio = new THREE.Audio(audioListener);
+      const audioLoader = new THREE.AudioLoader();
+      audioLoader.load('sfx/walking on wood.mp3', (buffer) => {
+        this.walkingAudio.setBuffer(buffer);
+        this.walkingAudio.setLoop(true);
+        this.walkingAudio.setVolume(1.0);
+      });
+    }
 
     // Sprite setup
     this.framesHoriz = 4;
@@ -118,6 +130,19 @@ export class Player {
 
       this.sprite.position.x = newX;
       this.sprite.position.z = newZ;
+    }
+
+    // Handle walking audio
+    if (this.walkingAudio && this.walkingAudio.buffer) {
+      if (isMoving) {
+        if (!this.walkingAudio.isPlaying) {
+          this.walkingAudio.play();
+        }
+      } else {
+        if (this.walkingAudio.isPlaying) {
+          this.walkingAudio.stop();
+        }
+      }
     }
   }
 

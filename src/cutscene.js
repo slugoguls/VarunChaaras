@@ -525,7 +525,7 @@ export class Cutscene {
       spotlightAudio = new THREE.Audio(listener);
       spotlightAudio.setBuffer(spotlightAudioBuffer);
       spotlightAudio.setLoop(false);
-      spotlightAudio.setVolume(1.0);
+      spotlightAudio.setVolume(0.05);
       spotlightAudio.play().then(() => {
         console.log('Spotlight audio playing');
       }).catch((err) => {
@@ -535,7 +535,7 @@ export class Cutscene {
       console.log('Spotlight audio not loaded yet, checking file path...');
       // Try to play it directly with HTML5 Audio as fallback
       const fallbackAudio = new Audio('spotlight.mp3');
-      fallbackAudio.volume = 1.0;
+      fallbackAudio.volume = 0.05;
       fallbackAudio.play().then(() => {
         console.log('Spotlight audio playing via fallback');
       }).catch((err) => {

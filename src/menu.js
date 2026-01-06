@@ -487,7 +487,7 @@ export class MenuScreen {
     // When fade completes exactly, play spotlight audio and start cutscene song fade-in
     setTimeout(() => {
       const spotlightAudio = new Audio('spotlight.mp3');
-      spotlightAudio.volume = 1.0;
+      spotlightAudio.volume = 0.5;
       spotlightAudio.play().catch(() => {});
       
       // Start cutscene song and fade it in after spotlight plays

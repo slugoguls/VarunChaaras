@@ -357,7 +357,7 @@ window.addEventListener("click", (event) => {
 joystick = new Joystick(); // Assign to existing variable
 
 // === PLAYER ===
-const player = new Player(boundary, 0.8, 3, joystick);
+const player = new Player(boundary, 0.8, 3, joystick, listener);
 scene.add(player.sprite);
 const collisionBox = player.getCollisionBox();
 scene.add(collisionBox);
