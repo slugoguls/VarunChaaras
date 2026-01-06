@@ -419,6 +419,11 @@ export class Cutscene {
         console.log('Cutscene: Set Lumi to sleeping state');
       }
       
+      // Silence purr initially for cutscene (only play when spotlight is on her)
+      if (window.lumi.setPurrEnabled) {
+          window.lumi.setPurrEnabled(false);
+      }
+      
       // Hide her for the first step
       window.lumi.cat.visible = false;
     } else {
@@ -718,6 +723,11 @@ export class Cutscene {
         offsetX = 0;
         offsetZ = 3; // Front of Lumi
         offsetY = 8;
+        
+        // Enable purr for this step
+        if (window.lumi && window.lumi.setPurrEnabled) {
+            window.lumi.setPurrEnabled(true);
+        }
       }
       
       this.spotlight.position.set(
@@ -750,6 +760,11 @@ export class Cutscene {
 
   nextStep() {
     console.log('Next step called, current:', this.currentStep);
+    
+    // Silence purr if moving away from Lumi scene
+    if (this.currentStep < this.steps.length && this.steps[this.currentStep].lumiScene && window.lumi && window.lumi.setPurrEnabled) {
+         window.lumi.setPurrEnabled(false);
+    }
     
     // Remove skip typewriter handler from previous step
     if (this._skipTypewriterHandler) {
@@ -892,6 +907,11 @@ export class Cutscene {
         // Unlock movement
         if (window.lumi.lockMovement) {
           window.lumi.lockMovement(false);
+        }
+        
+        // Ensure purr honors original state (if she was sleeping she purrs)
+        if (window.lumi.setPurrEnabled) {
+             window.lumi.setPurrEnabled(true);
         }
       }
 

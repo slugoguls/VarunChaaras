@@ -2,14 +2,21 @@
 import * as THREE from "three";
 import { loadSpriteSheet, setFrame } from "./spriteLoader.js";
 
-export async function createLumiCat(scene, colliders = [], roomBoundary = null) {
+export async function createLumiCat(scene, colliders = [], roomBoundary = null, audioListener = null) {
   const spritePath = "Char/LumiCat-Sheet.png";
   const framesHoriz = 6;
   const framesVert = 5;
   const frameDuration = 0.15;
   const speed = 1.0;
 
-  // Load texture and create material
+  // Audio setup
+  const purrSound = audioListener ? new THREE.PositionalAudio(audioListener) : null;
+  const meowSound = audioListener ? new THREE.PositionalAudio(audioListener) : null;
+  let meowBuffer1 = null;
+  let meowBuffer2 = null;
+  let meowTimer = Math.random() * 15 + 10; // Random meow interval
+
+  // Load animation texture and create material
   const texture = loadSpriteSheet(spritePath, framesHoriz, framesVert);
   const material = new THREE.MeshStandardMaterial({
     map: texture,
@@ -26,6 +33,41 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   const cat = new THREE.Mesh(geometry, material);
   cat.position.set(-5, -9.3, -5);
   scene.add(cat);
+
+  // Setup audio loading
+  if (audioListener) {
+    const audioLoader = new THREE.AudioLoader();
+    
+    // Load Purr
+    audioLoader.load('sfx/lumiprrr.mp3', (buffer) => {
+      if (purrSound) {
+        purrSound.setBuffer(buffer);
+        purrSound.setRefDistance(2);
+        purrSound.setLoop(true);
+        purrSound.setVolume(0.2);
+        cat.add(purrSound);
+        // If already in sleep state (initialized below), play it
+        if (currentState === "sleep") purrSound.play();
+      }
+    });
+
+    // Load Meow 1
+    audioLoader.load('sfx/lumi meow 1.mp3', (buffer) => {
+      meowBuffer1 = buffer;
+      if (meowSound && !meowSound.parent) cat.add(meowSound);
+    });
+
+    // Load Meow 2
+    audioLoader.load('sfx/lumi meow 2.mp3', (buffer) => {
+      meowBuffer2 = buffer;
+      if (meowSound && !meowSound.parent) cat.add(meowSound);
+    });
+    
+    if (meowSound) {
+      meowSound.setRefDistance(5);
+      meowSound.setVolume(1.0);
+    }
+  }
 
   // Collision box
   const collisionBoxMesh = new THREE.Mesh(
@@ -67,6 +109,15 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
       frameTimer = 0;
       material.emissiveIntensity = newState === "attack" ? 1.1 : (newState === "sleep" ? 0.2 : 0);
       if (newState === "attack") attackCount++;
+      
+      // Handle state-based audio (purring)
+      if (purrSound && purrSound.buffer) {
+        if (newState === "sleep") {
+          if (!purrSound.isPlaying) purrSound.play();
+        } else {
+          if (purrSound.isPlaying) purrSound.stop();
+        }
+      }
     }
   }
   
@@ -75,6 +126,17 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     stateBeforeAttack = currentState;
     _attackActive = true;
     changeState("attack");
+    
+    // Play a meow when interacted with/attacking
+    if (meowSound && (meowBuffer1 || meowBuffer2)) {
+      if (meowSound.isPlaying) meowSound.stop();
+      const buffer = Math.random() > 0.5 ? meowBuffer1 : meowBuffer2;
+      // If we have buffers loaded
+      if (buffer) {
+        meowSound.setBuffer(buffer);
+        meowSound.play();
+      }
+    }
   }
 
   function detectCollision(nextPos, playerSprite) {
@@ -128,6 +190,10 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
   function update(delta, playerSprite) {
     // If movement is locked, only update animation frames, don't move or change behavior
     if (movementLocked) {
+      if (purrSound && purrSound.isPlaying && currentState !== "sleep") {
+         purrSound.stop();
+      }
+      // ... same as before
       frameTimer += delta;
       // Animate sprite frames
       if (frameTimer >= frameDuration) {
@@ -139,6 +205,21 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
         setFrame(texture, currentFrame, framesHoriz, framesVert);
       }
       return; // Don't do any behavior or movement updates
+    }
+
+    // Random Meow Logic
+    if (meowBuffer1 && meowBuffer2 && meowSound && currentState !== "sleep") {
+      meowTimer -= delta;
+      if (meowTimer <= 0) {
+        // Play random meow
+        const buffer = Math.random() > 0.5 ? meowBuffer1 : meowBuffer2;
+        if (!meowSound.isPlaying) {
+          meowSound.setBuffer(buffer);
+          meowSound.play();
+        }
+        // Reset timer (random betwen 10-25 seconds)
+        meowTimer = Math.random() * 15 + 10;
+      }
     }
 
     frameTimer += delta;
@@ -194,6 +275,16 @@ export async function createLumiCat(scene, colliders = [], roomBoundary = null) 
     setState: (state) => {
       if (states[state]) {
         changeState(state);
+      }
+    },
+    // Add strict control over purr based on cutscene needs
+    setPurrEnabled: (enabled) => {
+      if (purrSound && purrSound.buffer) {
+        if (enabled && currentState === "sleep") {
+           if (!purrSound.isPlaying) purrSound.play();
+        } else {
+           if (purrSound.isPlaying) purrSound.stop();
+        }
       }
     },
     lockMovement: (locked) => {
